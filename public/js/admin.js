@@ -1,6 +1,6 @@
 ﻿
 
-import { database, ref, onValue, auth, update, push, remove, set } from './base.js';
+import { database, ref, onValue, auth, update, push, remove, set, get } from './base.js';
 
 let currentEditingProduct = null;
 let currentEditingUser = null;
@@ -34,6 +34,7 @@ function loadAdminData() {
     loadAds();
     loadPromoCodes();
     loadCommunities();
+    loadPendingRecharges();
     loadStats();
     loadThemeSetting();
 }
@@ -387,6 +388,127 @@ async function deleteCommunity(id) {
         hideLoader();
     }
 }
+
+// Pending recharges
+let pendingRecharges = [];
+
+function loadPendingRecharges() {
+    const pendingRef = ref(database, 'pendingRecharges');
+    console.log('Listening to pendingRecharges...');
+    onValue(pendingRef, (snapshot) => {
+        pendingRecharges = [];
+        if (snapshot.exists()) {
+            snapshot.forEach(child => {
+                pendingRecharges.push({ id: child.key, ...child.val() });
+            });
+        }
+        console.log('pendingRecharges snapshot, count=', pendingRecharges.length, snapshot.exists());
+        updatePendingRechargesTable();
+    }, (err) => console.error('Error loading pending recharges:', err));
+}
+
+function updatePendingRechargesTable() {
+    const tbody = document.getElementById('pendingRechargesBody');
+    if (!tbody) return;
+    if (!pendingRecharges || pendingRecharges.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="loading-row">No hay recargas pendientes</td></tr>';
+        return;
+    }
+
+        tbody.innerHTML = pendingRecharges.map(p => {
+        const imgHtml = p.imageBase64 ? `<button class="btn btn-sm btn-outline" onclick="openImageModalById('${p.id}')">Ver imagen</button>` : '—';
+        return `
+        <tr>
+            <td>${escapeHtml(p.username || p.userId || '')}</td>
+            <td>${escapeHtml(p.email || '')}</td>
+            <td>${Number(p.amount) || 0}</td>
+            <td>${formatDate(p.createdAt || '')}</td>
+            <td>${imgHtml}</td>
+            <td>
+                <button class="btn btn-sm btn-primary" onclick="acceptPendingWrapper('${p.id}')"><i class="fas fa-check"></i></button>
+                <button class="btn btn-sm btn-danger" onclick="rejectPendingWrapper('${p.id}')"><i class="fas fa-times"></i></button>
+            </td>
+        </tr>
+        `;
+    }).join('');
+}
+
+async function acceptPending(id) {
+    const p = pendingRecharges.find(x => x.id === id);
+    if (!p) return showToast('Registro no encontrado', 'error');
+    if (!confirm('Aceptar esta recarga y acreditar monedas al usuario?')) return;
+    showLoader();
+    try {
+        const userId = p.userId;
+        const amount = Number(p.amount) || 0;
+        // update user coins
+        const userRef = ref(database, `users/${userId}`);
+        // read current coins once
+        let currentCoins = 0;
+        try {
+            const userSnap = await get(userRef);
+            const data = userSnap.val() || {};
+            currentCoins = data.coins || 0;
+        } catch (err) {
+            console.warn('Could not read user coins:', err);
+        }
+        const newCoins = currentCoins + amount;
+        await update(userRef, { coins: newCoins, lastRecharge: new Date().toISOString() });
+
+        // push to recharges log
+        await push(ref(database, `recharges/${userId}`), { amount, method: 'Manual', status: 'Completado', fecha: new Date().toISOString(), adminReviewed: true });
+
+        // remove pending
+        await remove(ref(database, `pendingRecharges/${id}`));
+
+        showToast('Recarga aceptada y monedas acreditadas', 'success');
+    } catch (err) {
+        console.error('Error accepting pending recharge:', err);
+        showToast('Error al aceptar recarga', 'error');
+    } finally { hideLoader(); }
+}
+
+async function rejectPending(id) {
+    if (!confirm('Rechazar esta recarga?')) return;
+    showLoader();
+    try {
+        await remove(ref(database, `pendingRecharges/${id}`));
+        showToast('Recarga rechazada y eliminada', 'success');
+    } catch (err) {
+        console.error('Error rejecting pending recharge:', err);
+        showToast('Error al rechazar recarga', 'error');
+    } finally { hideLoader(); }
+}
+
+window.acceptPendingWrapper = function(id) { acceptPending(id); };
+window.rejectPendingWrapper = function(id) { rejectPending(id); };
+window.openImageModalById = function(id) {
+    console.log('openImageModalById called with id=', id);
+    const p = pendingRecharges.find(x=>x.id===id);
+    if (!p) { console.warn('openImageModalById: pending record not found', id); return; }
+    if (!p.imageBase64) { console.warn('openImageModalById: no imageBase64 in record', id); return; }
+    const modal = document.getElementById('imagePreviewModal');
+    const img = document.getElementById('imagePreviewImg');
+    if (!modal || !img) {
+        console.warn('openImageModalById: modal or image element not found, opening in new window as fallback');
+        const w = window.open();
+        if (w) {
+            w.document.write(`<title>Comprobante</title><img src="${p.imageBase64}" style="max-width:100%;height:auto;display:block;margin:12px auto;">`);
+        }
+        return;
+    }
+    img.src = p.imageBase64;
+    // ensure modal is visible
+    modal.classList.add('show');
+};
+window.closeImagePreviewModal = function() {
+    const modal = document.getElementById('imagePreviewModal');
+    const img = document.getElementById('imagePreviewImg');
+    if (img) img.src = '';
+    if (modal) modal.classList.remove('show');
+};
+// backward compatibility
+window.openImagePreview = window.openImageModalById;
 
 function loadProducts() {
     console.log('Loading products from Firebase...');

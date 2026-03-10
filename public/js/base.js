@@ -1,6 +1,6 @@
 ﻿
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, onValue, update, push, remove, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+import { getDatabase, ref, onValue, update, push, remove, set, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import { getAuth, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
 
@@ -20,6 +20,58 @@ export const database = getDatabase(app);
 export const auth = getAuth(app);
 export const analytics = getAnalytics(app);
 export { ref, onValue, update, push, remove, set };
+
+// expose `get` for one-time reads
+export { get };
+
+// Create a helper to upload a payment proof (base64) as a pending recharge
+window.uploadPaymentProof = async function(file, amount) {
+  if (!file) return false;
+  try {
+    const user = window.ADDUXSHOP?.currentUser;
+    if (!user) { showToast('Debes iniciar sesión', 'error'); return false; }
+
+    // check existing pending for this user
+    const pendingRef = ref(database, 'pendingRecharges');
+    const snapshot = await get(pendingRef);
+    let hasPending = false;
+    if (snapshot.exists()) {
+      snapshot.forEach(child => {
+        const val = child.val();
+        if (val && val.userId === user.uid && val.status === 'pending') hasPending = true;
+      });
+    }
+    if (hasPending) { showToast('Ya tienes una recarga pendiente. Espera a que sea revisada.', 'warning'); return false; }
+
+    // read file as base64
+    const dataUrl = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error('Error leyendo archivo'));
+      reader.readAsDataURL(file);
+    });
+
+    const amountNum = Number(amount) || 0;
+    const pendingData = {
+      userId: user.uid,
+      username: window.ADDUXSHOP.userData?.username || null,
+      email: window.ADDUXSHOP.userData?.email || null,
+      amount: amountNum,
+      imageBase64: dataUrl,
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    };
+
+    await push(ref(database, 'pendingRecharges'), pendingData);
+
+    showToast('Recarga enviada como pendiente. Espera la validación del admin.', 'success');
+    return true;
+  } catch (err) {
+    console.error('uploadPaymentProof error:', err);
+    showToast('Error al subir la comprobante', 'error');
+    return false;
+  }
+};
 
 window.ADDUXSHOP = window.ADDUXSHOP || {
   currentUser: null,
@@ -233,7 +285,45 @@ function setPaymentMethod(method){ const manualBtn = document.getElementById('me
 
 function toggleManualInfo(show){ const el = document.getElementById('manualInfo'); if (el) el.style.display = show ? 'block' : 'none'; }
 
- function updateManualInfo(amountPen){ const manualInfo = document.getElementById('manualInfo'); const manualAmount = document.getElementById('manualAmount'); const manualPaidBtn = document.getElementById('manualPaidBtn'); const manualSection = document.getElementById('manualSection'); const methodIsManual = manualSection?.classList?.contains('active'); if (!manualInfo || !manualAmount || !manualPaidBtn) return; if (!methodIsManual) { toggleManualInfo(false); return; } if (!amountPen || amountPen < 5) { toggleManualInfo(false); manualPaidBtn.disabled = true; return; } manualAmount.textContent = amountPen.toFixed(2); toggleManualInfo(true); manualPaidBtn.disabled = false; const user = window.ADDUXSHOP?.userData || {}; const authUser = auth?.currentUser; const email = user.email || authUser?.email || ''; const username = user.username || authUser?.displayName || (authUser?.email ? authUser.email.split('@')[0] : 'usuario'); const text = `Hola, *vengo de ADDUXSHOP.*\nPago: *S/ ${amountPen.toFixed(2)}.*\nCorreo: *${email}.*\nUsuario: *${username}.*`; const whatsappUrl = `https://wa.me/51971541408?text=${encodeURIComponent(text)}`; manualPaidBtn.onclick = () => { window.open(whatsappUrl,'_blank'); } }
+ function updateManualInfo(amountPen){
+  const manualInfo = document.getElementById('manualInfo');
+  const manualAmount = document.getElementById('manualAmount');
+  const manualPaidBtn = document.getElementById('manualPaidBtn');
+  const manualSection = document.getElementById('manualSection');
+  const methodIsManual = manualSection?.classList?.contains('active');
+  if (!manualInfo || !manualAmount || !manualPaidBtn) return;
+  if (!methodIsManual) { toggleManualInfo(false); return; }
+  if (!amountPen || amountPen < 5) { toggleManualInfo(false); manualPaidBtn.disabled = true; return; }
+
+  manualAmount.textContent = amountPen.toFixed(2);
+  toggleManualInfo(true);
+  manualPaidBtn.disabled = false;
+
+  // New behavior: open file picker and upload proof as pending recharge
+  manualPaidBtn.onclick = () => {
+    const user = window.ADDUXSHOP?.currentUser;
+    if (!user) { showToast('Debes iniciar sesión', 'error'); setTimeout(()=>{ window.location.href = '/login'; }, 1200); return; }
+
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.style.display = 'none';
+    fileInput.onchange = async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) { showToast('No se seleccionó imagen', 'warning'); return; }
+      manualPaidBtn.disabled = true;
+      const ok = await window.uploadPaymentProof(file, amountPen);
+      if (ok) {
+        showToast('Comprobante enviado. Espera la validación del admin.', 'success');
+      } else {
+        manualPaidBtn.disabled = false;
+      }
+    };
+    document.body.appendChild(fileInput);
+    fileInput.click();
+    setTimeout(() => { try { document.body.removeChild(fileInput); } catch(e){} }, 60000);
+  };
+ }
 
 window.openRechargeModal = function(){ const modal = document.getElementById('rechargeModal'); if (modal) { modal.style.display = 'flex'; const input = document.getElementById('customAmount'); if (input) input.value=''; const preview = document.getElementById('amountPreview'); if (preview) preview.style.display='none'; const previewPen = document.getElementById('previewPen'); const previewUsd = document.getElementById('previewUsd'); if (previewPen) previewPen.textContent='S/ 0.00'; if (previewUsd) previewUsd.textContent='USD 0.00'; setPaymentMethod('manual'); toggleManualInfo(false); } };
 window.closeRechargeModal = function(){ const modal = document.getElementById('rechargeModal'); if (modal) modal.style.display='none'; const input = document.getElementById('customAmount'); if (input) input.value=''; const preview = document.getElementById('amountPreview'); if (preview) preview.style.display='none'; };

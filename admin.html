@@ -130,9 +130,25 @@
                 <button class="menu-btn" onclick="showAdminSectionWrapper('promos')" data-section="promos">
                     <i class="fas fa-ticket-alt"></i> Promociones
                 </button>
+                <button class="menu-btn" onclick="showAdminSectionWrapper('recharges')" data-section="recharges">
+                    <i class="fas fa-credit-card"></i> Recargas
+                </button>
                 <button class="menu-btn" onclick="showAdminSectionWrapper('communities')" data-section="communities">
                     <i class="fas fa-users"></i> Comunidades
                 </button>
+    
+            <!-- Image preview modal for admin (inserted to ensure exists in DOM) -->
+            <div id="imagePreviewModal" class="modal" role="dialog" aria-modal="true">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Comprobante</h3>
+                        <button class="modal-close" aria-label="Cerrar" onclick="closeImagePreviewModal()">&times;</button>
+                    </div>
+                    <div class="modal-body" style="display:flex;align-items:center;justify-content:center;">
+                        <img id="imagePreviewImg" src="" alt="Comprobante" style="max-width:100%;height:auto;border-radius:8px;">
+                    </div>
+                </div>
+            </div>
             </div>
 
             
@@ -297,6 +313,31 @@
                 </div>
 
                 
+                <div id="recharges-section" class="admin-section-content">
+                    <div class="section-header">
+                        <h2><i class="fas fa-credit-card"></i> Recargas Pendientes</h2>
+                        <p>Revisar comprobantes subidos por usuarios y aceptar o rechazar.</p>
+                    </div>
+
+                    <div class="accounts-table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Email</th>
+                                    <th>Monto (monedas)</th>
+                                    <th>Fecha</th>
+                                    <th>Comprobante</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pendingRechargesBody">
+                                <tr><td colspan="6" class="loading-row">Cargando recargas pendientes...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <div id="analytics-section" class="admin-section-content">
                     <h2><i class="fas fa-chart-bar"></i> Analíticas y Estadísticas</h2>
                     
