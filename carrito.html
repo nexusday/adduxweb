@@ -1,0 +1,243 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrito de Compras - ADDUXSHOP</title>
+    <link rel="icon" href="imagenes/logo-shop.png" type="image/png">
+    <script>
+        (function() {
+            try {
+                const t = localStorage.getItem('cas_theme') || 'green-dark';
+                document.documentElement.classList.add('theme-' + t);
+            } catch (e) {
+                document.documentElement.classList.add('theme-green-dark');
+            }
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="public/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">
+                <img src="imagenes/logo-shop.png" alt="ADDUXSHOP" class="logo-image">
+            </a>
+            
+            
+            <div class="nav-right">
+                <div class="coins-display">
+                    <i class="fas fa-coins"></i>
+                    <span id="navCoins" class="coins-amount">0</span>
+                </div>
+                <div class="nav-divider"></div>
+                <button class="user-menu-btn" id="userMenuBtn" onclick="toggleUserMenu()">
+                    <i class="fas fa-user-circle"></i>
+                </button>
+            </div>
+            
+            
+            <div class="user-dropdown" id="userDropdown">
+                <div class="dropdown-header">
+                    <i class="fas fa-user-circle user-avatar"></i>
+                    <div class="user-info-dropdown">
+                        <span class="greeting">Hola,</span>
+                        <span class="username" id="dropdownUsername">Usuario</span>
+                    </div>
+                </div>
+                <div class="dropdown-divider"></div>
+                <a href="/perfil" class="dropdown-item">
+                    <i class="fas fa-user"></i>
+                    <span>Mi cuenta</span>
+                </a>
+                <a href="/carrito-compra" class="dropdown-item">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Carrito</span>
+                </a>
+                <a href="/panel" class="dropdown-item" id="adminDropdownBtn" style="display: none;">
+                    <i class="fas fa-cog"></i>
+                    <span>Admin</span>
+                </a>
+                <div class="dropdown-divider"></div>
+                <a href="#logout" class="dropdown-item logout-item" onclick="event.preventDefault(); logout();">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Salir</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    
+    <section class="cart-section">
+        <div class="container">
+            <div class="cart-header">
+                <h1><i class="fas fa-shopping-cart"></i> Mi Carrito</h1>
+                <p>Revisa y gestiona tus productos antes de comprar</p>
+            </div>
+
+            <div class="cart-content">
+                
+                <div class="cart-items-section">
+                    <div id="cartItems" class="cart-items">
+                        <div class="loading-placeholder">
+                            <p>Cargando carrito...</p>
+                        </div>
+                    </div>
+                    
+                    
+                    <div id="emptyCart" class="empty-cart" style="display: none;">
+                        <div class="empty-cart-icon"><i class="fas fa-shopping-cart"></i></div>
+                        <h2>Tu carrito está vacío</h2>
+                        <p>¡Explora nuestros productos y añade lo que te guste!</p>
+                        <a href="/" class="btn btn-primary">
+                            <i class="fas fa-shopping-bag"></i> Explorar Productos
+                        </a>
+                    </div>
+                </div>
+
+                
+                <div class="cart-summary-section">
+                    <div class="cart-summary">
+                        <h3>Resumen de Compra</h3>
+                        
+                        <div class="summary-row">
+                            <span>Subtotal:</span>
+                            <span id="subtotal">0 <i class="fas fa-coins"></i></span>
+                        </div>
+                        
+                        <div class="summary-row">
+                            <span>Descuentos:</span>
+                            <span id="discounts">-0 <i class="fas fa-coins"></i></span>
+                        </div>
+                        
+                        <div class="summary-row">
+                            <span>Impuestos:</span>
+                            <span id="taxes">0 <i class="fas fa-coins"></i></span>
+                        </div>
+                        
+                        <div class="summary-divider"></div>
+                        
+                        <div class="summary-row total">
+                            <span>Total:</span>
+                            <span id="total">0 <i class="fas fa-coins"></i></span>
+                        </div>
+                        
+                        <div class="coins-balance">
+                            <p>Tu saldo: <span id="userBalance">0 <i class="fas fa-coins"></i></span></p>
+                            <p id="balanceWarning" class="warning-text" style="display: none;">
+                                <i class="fas fa-exclamation-triangle"></i> No tienes suficientes monedas
+                            </p>
+                        </div>
+                        
+                        <button id="checkoutBtn" class="btn btn-primary checkout-btn" onclick="proceedToCheckout()">
+                            <i class="fas fa-credit-card"></i> Proceder al Pago
+                        </button>
+                        
+                        <button class="btn btn-outline" onclick="clearCart()">
+                            <i class="fas fa-trash"></i> Vaciar Carrito
+                        </button>
+                    </div>
+                    
+                    
+                    <div class="promo-section">
+                        <h4><i class="fas fa-gift"></i> Código Promocional</h4>
+                        <div class="promo-input-group">
+                            <input type="text" 
+                                   id="promoCode" 
+                                   class="form-input" 
+                                   placeholder="Ingresa tu código">
+                            <button class="btn btn-outline" onclick="applyPromoCode()">
+                                Aplicar
+                            </button>
+                        </div>
+                        <div id="promoMessage" class="promo-message"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    
+    <div id="checkoutModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-shopping-bag"></i> Confirmar Compra</h3>
+                <button class="modal-close" onclick="closeCheckoutModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="checkout-summary">
+                    <h4>Resumen Final</h4>
+                    <div id="checkoutItems"></div>
+                    <div class="checkout-total">
+                        <strong>Total a pagar: <span id="checkoutTotal">0 <i class="fas fa-coins"></i></span></strong>
+                        <span class="checkout-balance">Saldo: <span id="checkoutBalance">0 <i class="fas fa-coins"></i></span></span>
+                    </div>
+                </div>
+                
+                <div class="payment-method">
+                    <h4><i class="fas fa-credit-card"></i> Método de Pago</h4>
+                    <div class="payment-options">
+                        <label class="payment-option">
+                            <input type="radio" name="payment" value="coins" checked>
+                            <div class="payment-card">
+                                <span class="payment-icon"><i class="fas fa-coins"></i></span>
+                                <div>
+                                    <strong>Monedas Virtuales</strong>
+                                    <p>Pagar con tu saldo actual</p>
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="checkout-actions">
+                    <button class="btn btn-outline" onclick="closeCheckoutModal()">
+                        Cancelar
+                    </button>
+                    <button id="confirmPurchaseBtn" class="btn btn-primary" onclick="confirmPurchase()">
+                        <i class="fas fa-check"></i> Confirmar Compra
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>ADDUXSHOP</h3>
+                    <p>Tu plataforma de streaming y venta digital de confianza.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Enlaces</h4>
+                    <ul>
+                        <li><a href="/">Inicio</a></li>
+                        <li><a href="/perfil">Mi Perfil</a></li>
+                        <li><a href="#">Soporte</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <p>&copy; 2026 ADDUXSHOP. Todos los derechos reservados.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    
+    <script type="module" src="public/js/base.js"></script>
+    <script type="module" src="public/js/carrito.js"></script>
+</body>
+</html>
+
+
+
+

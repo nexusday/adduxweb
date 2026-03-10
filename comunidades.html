@@ -1,0 +1,136 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comunidades - ADDUXSHOP</title>
+    <link rel="icon" href="imagenes/logo-shop.png" type="image/png">
+    <script>
+        (function() {
+            try {
+                const t = localStorage.getItem('cas_theme') || 'green-dark';
+                document.documentElement.classList.add('theme-' + t);
+            } catch (e) {
+                document.documentElement.classList.add('theme-green-dark');
+            }
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="public/css/style.css">
+    <link rel="stylesheet" href="public/css/comunidades.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="ambient-glow"></div>
+
+    <nav class="navbar elite-nav">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <div class="logo-box">
+                    <img src="imagenes/logo-shop.png" alt="ADDUX SHOP" class="logo-mark">
+                </div>
+                ADDUX SHOP
+            </a>
+
+            <div class="nav-links">
+                <a href="/">Inicio</a>
+                <a href="/carrito-compra">Carrito</a>
+                <a href="/comunidades" class="active">Comunidades</a>
+                <a href="https://wa.me/51971541408" target="_blank" rel="noreferrer">Soporte</a>
+            </div>
+
+            <div class="nav-actions" id="navRight">
+                <div id="loggedOutNav" class="nav-auth" style="display: flex; gap: 0.75rem;">
+                    <a href="/login" class="btn btn-ghost btn-sm">Ingresar</a>
+                    <a href="/registrar" class="btn btn-primary btn-sm">Crear Cuenta</a>
+                </div>
+
+                <div id="loggedInNav" class="nav-auth" style="display: none; gap: 1rem; align-items: center;">
+                    <div class="coins-display">
+                        <i data-lucide="coins"></i>
+                        <span id="navCoins" class="coins-amount">0</span>
+                    </div>
+                    <div class="nav-divider"></div>
+                    <button class="user-menu-btn" id="userMenuBtn" onclick="toggleUserMenu()" aria-label="Menú de usuario">
+                        <i data-lucide="user-round"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="user-dropdown" id="userDropdown">
+                <div class="dropdown-header">
+                    <i class="fas fa-user-circle user-avatar"></i>
+                    <div class="user-info-dropdown">
+                        <span class="greeting">Hola,</span>
+                        <span class="username" id="dropdownUsername">Usuario</span>
+                    </div>
+                </div>
+                <div class="dropdown-divider"></div>
+                <a href="/perfil" class="dropdown-item">
+                    <i class="fas fa-user"></i>
+                    <span>Mi cuenta</span>
+                </a>
+                <a href="/carrito-compra" class="dropdown-item">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Carrito</span>
+                </a>
+                <a href="#recargar" class="dropdown-item" onclick="event.preventDefault(); openRechargeModal();">
+                    <i class="fas fa-coins"></i>
+                    <span>Recargar Monedas</span>
+                </a>
+                <a href="/comunidades" class="dropdown-item">
+                    <i class="fas fa-users"></i>
+                    <span>Comunidades</span>
+                </a>
+                <a href="https://wa.me/51971541408" target="_blank" rel="noreferrer" class="dropdown-item" id="supportWhatsapp">
+                    <i class="fab fa-whatsapp"></i>
+                    <span>Soporte WhatsApp</span>
+                </a>
+                <a href="/panel" class="dropdown-item" id="adminDropdownBtn" style="display: none;">
+                    <i class="fas fa-cog"></i>
+                    <span>Admin</span>
+                </a>
+                <div class="dropdown-divider"></div>
+                <a href="#logout" class="dropdown-item logout-item" onclick="event.preventDefault(); logout();">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Salir</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="communities-hero">
+        <div class="container">
+            <span class="communities-kicker"><i class="fas fa-users"></i> Comunidad oficial</span>
+            <h1 class="communities-title">unete a las comunidades de ADDUXSHOP</h1>
+            <p class="communities-subtitle">Comparte novedades, recibe soporte directo y entérate antes que nadie de promociones y lanzamientos.</p>
+            <div class="communities-actions">
+                <a class="btn btn-primary" href="https://wa.me/51971541408" target="_blank" rel="noreferrer">Hablar con soporte</a>
+                <a class="btn btn-ghost" href="/carrito-compra">Ir al carrito</a>
+            </div>
+        </div>
+    </header>
+
+    <section class="communities-section">
+        <div class="container">
+            <div class="communities-header">
+                <h2 class="communities-title" style="font-size:1.4rem;">Comunidades disponibles</h2>
+                <div class="communities-meta" id="communitiesCount">0 comunidades</div>
+            </div>
+            <div class="communities-grid" id="communitiesGrid">
+                <div class="empty-state">Cargando comunidades...</div>
+            </div>
+        </div>
+    </section>
+
+    
+    <script type="module" src="public/js/comunidades.js"></script>
+</body>
+</html>
+
+
+
+

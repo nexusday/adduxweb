@@ -1,0 +1,175 @@
+﻿
+
+.communities-hero {
+    position: relative;
+    padding: 4rem 0 3rem;
+    background: radial-gradient(circle at 20% 20%, rgba(46, 204, 113, 0.12), transparent 35%),
+                radial-gradient(circle at 80% 0%, rgba(59, 130, 246, 0.12), transparent 30%),
+                var(--bg-primary, #050505);
+}
+
+.communities-hero .container {
+    display: grid;
+    gap: 1rem;
+}
+
+.communities-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(46, 204, 113, 0.12);
+    color: #6ee7b7;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.communities-title {
+    font-size: clamp(2rem, 4vw, 2.6rem);
+    letter-spacing: -0.03em;
+    color: var(--text-primary, #f8fafc);
+    margin: 0;
+}
+
+.communities-subtitle {
+    max-width: 640px;
+    color: var(--text-secondary, #cbd5e1);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin: 0.5rem 0 0;
+}
+
+.communities-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+}
+
+.communities-section {
+    padding: 2.5rem 0 3.5rem;
+    background: var(--bg-secondary, #0a0a0a);
+}
+
+.communities-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.communities-meta {
+    color: var(--text-secondary, #a1a1aa);
+    font-weight: 600;
+}
+
+.communities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+}
+
+.community-card {
+    position: relative;
+    border-radius: 14px;
+    padding: 1.2rem;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.community-top {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.community-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: #fff;
+    background: linear-gradient(135deg, #10b981, #0ea5e9);
+}
+
+.community-icon.discord { background: linear-gradient(135deg, #5865f2, #7c8bff); }
+.community-icon.telegram { background: linear-gradient(135deg, #2aabee, #50c8ff); }
+
+.community-name {
+    font-weight: 800;
+    color: var(--text-primary, #f8fafc);
+    font-size: 1.05rem;
+}
+
+.community-type {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.28rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: capitalize;
+    background: rgba(46, 204, 113, 0.12);
+    color: #6ee7b7;
+}
+
+.community-type.discord { background: rgba(88, 101, 242, 0.14); color: #a5b4ff; }
+.community-type.telegram { background: rgba(0, 169, 255, 0.16); color: #67e8f9; }
+
+.community-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.75rem;
+}
+
+.community-link {
+    flex: 1;
+}
+
+.community-link .btn {
+    width: 100%;
+    justify-content: center;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 2.5rem 1.5rem;
+    border: 1px dashed rgba(255, 255, 255, 0.14);
+    border-radius: 12px;
+    color: var(--text-secondary, #cbd5e1);
+}
+
+@media (max-width: 768px) {
+    .communities-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .communities-actions {
+        width: 100%;
+    }
+
+    .community-actions {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .community-link .btn {
+        width: 100%;
+    }
+}
+
+
+
+

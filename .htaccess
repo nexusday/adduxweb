@@ -1,0 +1,20 @@
+<IfModule mod_headers.c>
+  Header always set Cache-Control "public, max-age=0"
+</IfModule>
+
+
+RewriteEngine On
+
+
+# Friendly routes -> serve the corresponding html files without redirecting
+RewriteRule ^panel/?$ admin.html [L]
+RewriteRule ^perfil/?$ perfil.html [L]
+RewriteRule ^registrar/?$ register.html [L]
+RewriteRule ^carrito-compra/?$ carrito.html [L]
+RewriteRule ^login/?$ login.html [L]
+RewriteRule ^comunidades/?$ comunidades.html [L]
+
+# Fallback: if a requested path does not map to a real file, serve index.html (SPA)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.html [L]

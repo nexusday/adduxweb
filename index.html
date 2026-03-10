@@ -1,0 +1,201 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADDUX SHOP</title>
+    <meta name="description" content="ADDUXSHOP - Plataforma de venta digital y recarga de monedas virtuales">
+    <link rel="icon" href="imagenes/logo-shop.png" type="image/png">
+    <script>
+        (function() {
+            try {
+                const t = localStorage.getItem('cas_theme') || 'green-dark';
+                document.documentElement.classList.add('theme-' + t);
+            } catch (e) {
+                document.documentElement.classList.add('theme-green-dark');
+            }
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="public/css/style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div class="ambient-glow"></div>
+
+    <nav class="navbar elite-nav">
+        <div class="nav-container">
+            <a href="/" class="logo">
+                <div class="logo-box">
+                    <img src="imagenes/logo-shop.png" alt="ADDUX SHOP" class="logo-mark">
+                </div>
+                ADDUX SHOP
+            </a>
+
+            <div class="nav-links">
+                <a href="#productos">Productos</a>
+                <a href="/carrito-compra">Carrito</a>
+                <a href="https://wa.me/51971541408" target="_blank" rel="noreferrer">Soporte</a>
+            </div>
+
+            <div class="nav-actions" id="navRight">
+                <div id="loggedOutNav" class="nav-auth" style="display: flex; gap: 0.75rem;">
+                    <a href="/login" class="btn btn-ghost btn-sm">Ingresar</a>
+                    <a href="/registrar" class="btn btn-primary btn-sm">Crear Cuenta</a>
+                </div>
+
+                <div id="loggedInNav" class="nav-auth" style="display: none; gap: 1rem; align-items: center;">
+                    <div class="coins-display">
+                        <i data-lucide="coins"></i>
+                        <span id="navCoins" class="coins-amount">0</span>
+                    </div>
+                    <div class="nav-divider"></div>
+                    <button class="user-menu-btn" id="userMenuBtn" onclick="toggleUserMenu()" aria-label="Menú de usuario">
+                        <i data-lucide="user-round"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="user-dropdown" id="userDropdown">
+                <div class="dropdown-header">
+                    <i class="fas fa-user-circle user-avatar"></i>
+                    <div class="user-info-dropdown">
+                        <span class="greeting">Hola,</span>
+                        <span class="username" id="dropdownUsername">Usuario</span>
+                    </div>
+                </div>
+                <div class="dropdown-divider"></div>
+                <a href="/perfil" class="dropdown-item">
+                    <i class="fas fa-user"></i>
+                    <span>Mi cuenta</span>
+                </a>
+                <a href="/carrito-compra" class="dropdown-item">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Carrito</span>
+                </a>
+                <a href="#recargar" class="dropdown-item" onclick="event.preventDefault(); openRechargeModal();">
+                    <i class="fas fa-coins"></i>
+                    <span>Recargar Monedas</span>
+                </a>
+                <a href="/comunidades" class="dropdown-item">
+                    <i class="fas fa-users"></i>
+                    <span>Comunidades</span>
+                </a>
+                <a href="https://wa.me/51971541408" target="_blank" rel="noreferrer" class="dropdown-item" id="supportWhatsapp">
+                    <i class="fab fa-whatsapp"></i>
+                    <span>Soporte WhatsApp</span>
+                </a>
+                <a href="/panel" class="dropdown-item" id="adminDropdownBtn" style="display: none;">
+                    <i class="fas fa-cog"></i>
+                    <span>Admin</span>
+                </a>
+                <div class="dropdown-divider"></div>
+                <a href="#logout" class="dropdown-item logout-item" onclick="event.preventDefault(); logout();">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Salir</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero elite-hero" id="productos">
+        <span class="hero-label"></span>
+        <h1 class="hero-title-combo">
+            <span>ADDUX SHOP</span>
+            <img src="imagenes/logo-shop.png" alt="ADDUX SHOP" class="hero-title-logo">
+        </h1>
+        <p class="hero-subtitle">Tu tienda digital que sabe lo que necesitas.</p>
+        <div class="hero-actions">
+            <a href="#productsGrid" class="btn btn-primary">Ver productos</a>
+            <button class="btn btn-ghost" onclick="openRechargeModal()">Recargar monedas</button>
+        </div>
+        <div class="hero-meta">
+            <div class="meta-chip"><i data-lucide="shield-check"></i>Pagos seguros</div>
+            <div class="meta-chip"><i data-lucide="clock-3"></i>Entrega inmediata</div>
+            <div class="meta-chip"><i data-lucide="sparkles"></i>Soporte 24/7</div>
+        </div>
+        <div class="ad-carousel" id="adCarousel">
+            <div class="ad-carousel-track" id="carouselInner"></div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="products-meta">
+            <div class="search-bar" style="width: min(720px, 100%);">
+                <i class="fas fa-search search-icon" aria-hidden="true"></i>
+                <input type="search" id="productSearch" class="search-input" placeholder="Buscar títulos, categorías o descripciones..." aria-label="Buscar productos">
+            </div>
+        </div>
+        <div class="course-grid" id="productsGrid"></div>
+    </main>
+
+    
+    <div id="rechargeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-coins"></i> Recargar Monedas</h3>
+                <button class="modal-close" onclick="closeRechargeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="payment-method-switch">
+                    <button id="methodManualBtn" class="btn btn-primary" type="button">Pagar con Yape/Plin/BCP</button>
+                </div>
+
+                <div class="recharge-custom">
+                    <div class="custom-input-group">
+                        <div class="input-wrapper">
+                            <label for="customAmount">Monto en PEN</label>
+                            <div class="input-with-icon">
+                                <span class="currency-prefix">S/</span>
+                                    <input type="number" id="customAmount" placeholder="Ej: 50" min="5" max="10000">
+                            </div>
+                            <small>Tipo de cambio: 1 USD = 3.60 PEN</small>
+                                <small>Mínimo: S/ 5.00 (USD 1.39) | 1 PEN = 1 Moneda</small>
+                        </div>
+                        <div id="amountPreview" class="amount-preview" style="display: none;">
+                            <p>Monto seleccionado:</p>
+                            <p>
+                                <span id="previewPen">S/ 0.00</span> �?^ <span id="previewUsd">USD 0.00</span>
+                            </p>
+                        </div>
+                        <div id="manualInfo" class="manual-info" style="display: none;">
+                            <p class="manual-name">Nombre: Izi AdduxShoping</p>
+                            <div class="manual-qr">
+                                <img src="imagenes/metodopago-peru.png" alt="QR de pago" loading="lazy">
+                            </div>
+                            <p class="manual-amount">Paga S/ <span id="manualAmount">0.00</span> con Yape/Plin/BCP.</p>
+                            <button id="manualPaidBtn" class="btn btn-primary" type="button">Ya pagué</button>
+                        </div>
+                        <button id="proceedManualBtn" class="btn btn-primary" type="button" onclick="rechargeCustomAmount()" style="width: 100%; margin-top: 1rem;">
+                            Proceder con Transferencia
+                        </button>
+                    </div>
+                </div>
+
+               
+                
+
+                <div id="manualSection" class="payment-panel" style="display: none;">
+                    <p class="divider-text">Transferencia manual (Yape / Plin / BCP)</p>
+                    <ol class="manual-steps">
+                        <li>Ingresa el monto y escanea el QR o transfiere.</li>
+                        <li>Presiona "Ya pagué" para avisar por WhatsApp.</li>
+                        <li>Envía la captura del pago junto al mensaje.</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <script type="module" src="public/js/base.js"></script>
+    <script type="module" src="public/js/app.js"></script>
+</body>
+</html>
+
+
+
+

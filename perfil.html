@@ -1,0 +1,347 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - ADDUXSHOP</title>
+    <link rel="icon" href="imagenes/logo-shop.png" type="image/png">
+    <script>
+        (function() {
+            try {
+                const t = localStorage.getItem('cas_theme') || 'green-dark';
+                document.documentElement.classList.add('theme-' + t);
+            } catch (e) {
+                document.documentElement.classList.add('theme-green-dark');
+            }
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="public/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+</head>
+<body>
+    
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">
+                <img src="imagenes/logo-shop.png" alt="ADDUXSHOP" class="logo-image">
+            </a>
+            
+            
+            <div class="nav-right">
+                <div class="coins-display">
+                    <i class="fas fa-coins"></i>
+                    <span id="navCoins" class="coins-amount">0</span>
+                </div>
+                <div class="nav-divider"></div>
+                <button class="user-menu-btn" id="userMenuBtn" onclick="toggleUserMenu()">
+                    <i class="fas fa-user-circle"></i>
+                </button>
+            </div>
+            
+            
+            <div class="user-dropdown" id="userDropdown">
+                <div class="dropdown-header">
+                    <i class="fas fa-user-circle user-avatar"></i>
+                    <div class="user-info-dropdown">
+                        <span class="greeting">Hola,</span>
+                        <span class="username" id="dropdownUsername">Usuario</span>
+                    </div>
+                </div>
+                <div class="dropdown-divider"></div>
+                <a href="/perfil" class="dropdown-item">
+                    <i class="fas fa-user"></i>
+                    <span>Mi cuenta</span>
+                </a>
+                <a href="/carrito-compra" class="dropdown-item">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Carrito</span>
+                </a>
+                <a href="#recharge" class="dropdown-item" onclick="event.preventDefault(); showRechargeModal(); toggleUserMenu();">
+                    <i class="fas fa-coins"></i>
+                    <span>Recargar Monedas</span>
+                </a>
+                <a href="/comunidades" class="dropdown-item">
+                    <i class="fas fa-users"></i>
+                    <span>Comunidades</span>
+                </a>
+                <a href="https://wa.me/51971541408" target="_blank" rel="noreferrer" class="dropdown-item" id="supportWhatsapp">
+                    <i class="fab fa-whatsapp"></i>
+                    <span>Soporte WhatsApp</span>
+                </a>
+                <a href="/panel" class="dropdown-item" id="adminDropdownBtn" style="display: none;">
+                    <i class="fas fa-cog"></i>
+                    <span>Admin</span>
+                </a>
+                <div class="dropdown-divider"></div>
+                <a href="#logout" class="dropdown-item logout-item" onclick="event.preventDefault(); logout();">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Salir</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    
+    <section class="profile-section">
+        <div class="container">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    <div class="avatar-circle">
+                        <span id="avatarInitial"><i class="fas fa-user"></i></span>
+                    </div>
+                    <button class="btn btn-outline btn-sm" onclick="changeAvatar()">
+                        Cambiar Avatar
+                    </button>
+                </div>
+                <div class="profile-info">
+                    <h1 id="profileUsername">Cargando...</h1>
+                    <p id="profileEmail">cargando@email.com</p>
+                    <div class="profile-stats">
+                        <div class="stat-item">
+                            <span class="stat-value" id="profileCoins">0</span>
+                            <span class="stat-label">Monedas</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="profilePurchases">0</span>
+                            <span class="stat-label">Compras</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="profileMemberSince">-</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="profile-actions">
+                    <button class="btn btn-primary" onclick="showEditProfile()">
+                        <i class="fas fa-edit"></i> Editar Perfil
+                    </button>
+                    <button class="btn btn-accent" onclick="showRechargeModal()">
+                        <i class="fas fa-coins"></i> Recargar Monedas
+                    </button>
+                </div>
+            </div>
+
+            <div class="profile-content">
+                
+                <div class="profile-menu">
+                    <button class="menu-item active" onclick="showSection('purchases')">
+                        <i class="fas fa-box"></i> Historial de Compras
+                    </button>
+                    <button class="menu-item" onclick="showSection('accounts')">
+                        <i class="fas fa-key"></i> Cuentas Compradas
+                    </button>
+                    <button class="menu-item" onclick="showSection('settings')">
+                        <i class="fas fa-cog"></i> Configuración
+                    </button>
+                    <button class="menu-item" onclick="showSection('recharges')">
+                        <i class="fas fa-credit-card"></i> Historial de Recargas
+                    </button>
+                    <button class="menu-item" onclick="showSection('favorites')">
+                        <i class="fas fa-spa"></i> Favoritos
+                    </button>
+                </div>
+
+                
+                <div class="profile-content-main">
+                    
+                    <div id="purchases-section" class="content-section active">
+                        <h2><i class="fas fa-box"></i> Historial de Compras</h2>
+                        <div class="purchases-list" id="purchasesList">
+                            <div class="loading-placeholder">
+                                <p>Cargando historial de compras...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div id="accounts-section" class="content-section">
+                        <h2><i class="fas fa-key"></i> Cuentas Compradas</h2>
+                        <div class="purchases-list" id="accountsList">
+                            <div class="loading-placeholder">
+                                <p>Cargando cuentas entregadas...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div id="settings-section" class="content-section">
+                        <h2><i class="fas fa-cog"></i> Configuración de Cuenta</h2>
+                        <div class="settings-grid">
+                            <div class="setting-group">
+                                <h3>Información Personal</h3>
+                                <form id="profileForm" class="settings-form">
+                                    <div class="form-group">
+                                        <label for="editUsername">Usuario</label>
+                                        <input type="text" id="editUsername" class="form-input">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editEmail">Correo</label>
+                                        <input type="email" id="editEmail" class="form-input" readonly>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="editPhone">Teléfono</label>
+                                        <input type="tel" id="editPhone" class="form-input">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                                </form>
+                            </div>
+
+                            <div class="setting-group">
+                                <h3>Seguridad</h3>
+                                <button class="btn btn-outline" onclick="showChangePassword()">
+                                    <i class="fas fa-key"></i> Cambiar Contraseña
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div id="recharges-section" class="content-section">
+                        <h2><i class="fas fa-credit-card"></i> Historial de Recargas</h2>
+                        <div class="recharges-list" id="rechargesList">
+                            <div class="loading-placeholder">
+                                <p>Cargando historial de recargas...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <div id="favorites-section" class="content-section">
+                        <h2><i class="fas fa-spa"></i> Productos Favoritos</h2>
+                        <div class="favorites-grid" id="favoritesGrid">
+                            <div class="loading-placeholder">
+                                <p>Cargando productos favoritos...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    
+    <div id="rechargeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-coins"></i> Recargar Monedas</h3>
+                <button class="modal-close" onclick="closeRechargeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="payment-method-switch">
+                    <button id="methodManualBtn" class="btn btn-primary" type="button">Pagar con Yape/Plin/BCP</button>
+                </div>
+
+                <div class="recharge-custom">
+                    <div class="custom-input-group">
+                        <div class="input-wrapper">
+                            <label for="customAmount">Monto en PEN</label>
+                            <div class="input-with-icon">
+                                <span class="currency-prefix">S/</span>
+                                <input type="number" id="customAmount" placeholder="Ej: 50" min="5" max="10000">
+                            </div>
+                            <small>Tipo de cambio: 1 USD = 3.60 PEN</small>
+                            <small>Mínimo: S/ 5.00 (USD 1.39) | 1 PEN = 1 Moneda</small>
+                        </div>
+                        <div id="amountPreview" class="amount-preview" style="display: none;">
+                            <p>Monto seleccionado:</p>
+                            <p>
+                                <span id="previewPen">S/ 0.00</span> �?^ <span id="previewUsd">USD 0.00</span>
+                            </p>
+                        </div>
+                        <div id="manualInfo" class="manual-info" style="display: none;">
+                            <p class="manual-name">Nombre: Maria J. Arroyo</p>
+                            <div class="manual-qr">
+                                <img src="imagenes/metodopago-peru.png" alt="QR de pago" loading="lazy">
+                            </div>
+                            <p class="manual-amount">Paga S/ <span id="manualAmount">0.00</span> con Yape/Plin/BCP.</p>
+                            <button id="manualPaidBtn" class="btn btn-primary" type="button">Ya pagué</button>
+                        </div>
+                        <button id="proceedManualBtn" class="btn btn-primary" type="button" onclick="rechargeCustomAmount()" style="width: 100%; margin-top: 1rem;">
+                            Proceder con Transferencia
+                        </button>
+                    </div>
+                </div>
+
+                
+                
+
+                <div id="manualSection" class="payment-panel" style="display: none;">
+                    <p class="divider-text">Transferencia manual (Yape / Plin / BCP)</p>
+                    <ol class="manual-steps">
+                        <li>Ingresa el monto y escanea el QR o transfiere.</li>
+                        <li>Presiona "Ya pagué" para avisar por WhatsApp.</li>
+                        <li>Envía la captura del pago junto al mensaje.</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <div id="editProfileModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Editar Perfil</h3>
+                <button class="modal-close" onclick="closeEditProfileModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editProfileForm">
+                    <div class="form-group">
+                        <label for="modalUsername">Usuario</label>
+                        <input type="text" id="modalUsername" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalPhone">Teléfono</label>
+                        <input type="tel" id="modalPhone" class="form-input" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" onclick="closeEditProfileModal()">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>ADDUXSHOP</h3>
+                    <p>Tu plataforma de streaming y venta digital de confianza.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Enlaces</h4>
+                    <ul>
+                        <li><a href="/">Inicio</a></li>
+                        <li><a href="/carrito-compra">Carrito</a></li>
+                        <li><a href="/perfil">Perfil</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <p>&copy; 2026 ADDUXSHOP. Todos los derechos reservados.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    
+    <script type="module" src="public/js/base.js"></script>
+    <script type="module" src="public/js/monedas.js"></script>
+    <script type="module" src="public/js/auth.js"></script>
+    <script type="module" src="public/js/perfil.js"></script>
+
+
+
+
+

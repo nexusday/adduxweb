@@ -1,0 +1,876 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Panel Admin - ADDUXSHOP</title>
+        <link rel="icon" href="imagenes/logo-shop.png" type="image/png">
+        <script>
+            (function() {
+                try {
+                    const t = localStorage.getItem('cas_theme') || 'green-dark';
+                    document.documentElement.classList.add('theme-' + t);
+                } catch (e) {
+                    document.documentElement.classList.add('theme-green-dark');
+                }
+            })();
+        </script>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="public/css/style.css">
+        <link rel="stylesheet" href="public/css/admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    
+    <!-- Login form shown on /panel; server exposes POST /api/admin/verify -->
+
+    <div id="adminLogin" class="admin-password-modal" style="display:flex;">
+        <div class="admin-password-container">
+            <div class="admin-password-card">
+                <div class="admin-password-header">
+                    <h2><i class="fas fa-user-shield"></i> Acceso Administrador</h2>
+                    <p>Introduce tus credenciales para acceder al panel</p>
+                </div>
+                <form id="adminLoginForm" class="admin-password-form">
+                    <div class="form-group">
+                        <label for="adminUser">Usuario</label>
+                        <input id="adminUser" class="form-input" type="text" required autofocus>
+                    </div>
+                    <div class="form-group" style="position:relative;">
+                        <label for="adminPass">Contraseña</label>
+                        <input id="adminPass" class="form-input" type="password" required>
+                        <button type="button" id="togglePass" title="Mostrar" style="position:absolute; right:12px; top:38px; border:0; background:transparent; color:var(--text-muted); cursor:pointer;"></button>
+                    </div>
+                    <div id="loginError" class="password-error" style="display:none;"></div>
+                    <div class="admin-password-actions">
+                        <button type="submit" class="btn btn-primary">Entrar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel (oculto hasta login) -->
+    <div id="adminPanel" style="display: none;">
+    
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">
+                <img src="imagenes/logo-shop.png" alt="ADDUXSHOP" class="logo-image">
+            </a>
+            <ul class="nav-menu">
+                <li><a href="/" class="nav-link">Inicio</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    
+    <section class="admin-section">
+        <div class="container">
+            <div class="admin-header">
+                <h1><i class="fas fa-cog"></i> Panel de Administración</h1>
+                <p>Gestiona productos, usuarios y configuración del sistema</p>
+            </div>
+
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-users"></i></div>
+                    <div class="stat-info">
+                        <h3 id="totalUsers">0</h3>
+                        <p>Usuarios Totales</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-box"></i></div>
+                    <div class="stat-info">
+                        <h3 id="totalProducts">0</h3>
+                        <p>Productos</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-coins"></i></div>
+                    <div class="stat-info">
+                        <h3 id="totalRevenue">0</h3>
+                        <p>Ingresos Totales</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-shopping-cart"></i></div>
+                    <div class="stat-info">
+                        <h3 id="totalOrders">0</h3>
+                        <p>Pedidos Totales</p>
+                    </div>
+                </div>
+            </div>
+
+            
+            <div class="admin-menu">
+                <button class="menu-btn active" onclick="showAdminSectionWrapper('products')" data-section="products">
+                    <i class="fas fa-box"></i> Productos
+                </button>
+                <button class="menu-btn" onclick="showAdminSectionWrapper('users')" data-section="users">
+                    <i class="fas fa-users"></i> Usuarios
+                </button>
+                <button class="menu-btn" onclick="showAdminSectionWrapper('ads')" data-section="ads">
+                    <i class="fas fa-bullhorn"></i> Anuncios
+                </button>
+                <button class="menu-btn" onclick="showAdminSectionWrapper('accounts')" data-section="accounts">
+                    <i class="fas fa-key"></i> Cuentas
+                </button>
+                <button class="menu-btn" onclick="showAdminSectionWrapper('analytics')" data-section="analytics">
+                    <i class="fas fa-chart-bar"></i> Analíticas
+                </button>
+                <button class="menu-btn" onclick="showAdminSectionWrapper('settings')" data-section="settings">
+                    <i class="fas fa-sliders-h"></i> Configuración
+                </button>
+                <button class="menu-btn" onclick="showAdminSectionWrapper('promos')" data-section="promos">
+                    <i class="fas fa-ticket-alt"></i> Promociones
+                </button>
+                <button class="menu-btn" onclick="showAdminSectionWrapper('communities')" data-section="communities">
+                    <i class="fas fa-users"></i> Comunidades
+                </button>
+            </div>
+
+            
+            <div class="admin-content">
+                
+                <div id="products-section" class="admin-section-content active">
+                    <div class="section-header">
+                        <h2><i class="fas fa-box"></i> Gestión de Productos</h2>
+                        <button class="btn btn-primary" onclick="showProductModalWrapper()">
+                            <i class="fas fa-plus"></i> Añadir Producto
+                        </button>
+                    </div>
+                    
+                    <div class="section-subheader">
+                        <h3>Gestión de Categorías</h3>
+                        <form id="categoryForm" class="inline-form">
+                            <input type="text" id="categoryName" class="form-input" placeholder="Nombre de categoría (ej. Streaming)" required>
+                            <button type="submit" class="btn btn-outline">Crear Categoría</button>
+                        </form>
+                        <div id="categoriesList" class="categories-list">Cargando categorías...</div>
+                    </div>
+                    
+                    <div class="products-table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Imagen</th>
+                                    <th>Título</th>
+                                    <th>Precio</th>
+                                    <th>Descuento</th>
+                                    <th>Stock</th>
+                                    <th>Categoría</th>
+                                    <th>Base</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTableBody">
+                                <tr>
+                                    <td colspan="9" class="loading-row">Cargando productos...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                
+                <div id="users-section" class="admin-section-content">
+                    <div class="section-header">
+                        <h2><i class="fas fa-users"></i> Gestión de Usuarios</h2>
+                        <div class="search-box">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" id="userSearch" placeholder="Buscar usuarios..." onkeyup="searchUsers()">
+                        </div>
+                    </div>
+                    
+                    <div class="users-table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Email</th>
+                                    <th>Teléfono</th>
+                                    <th>Monedas</th>
+                                    <th>Rol</th>
+                                    <th>Estado</th>
+                                    <th>Registro</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr>
+                                    <td colspan="8" class="loading-row">Cargando usuarios...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                
+                <div id="ads-section" class="admin-section-content">
+                    <div class="section-header">
+                        <h2><i class="fas fa-bullhorn"></i> Gestión de Anuncios</h2>
+                        <button class="btn btn-primary" onclick="showAdModalWrapper()">
+                            <i class="fas fa-plus"></i> Añadir Anuncio
+                        </button>
+                    </div>
+                    
+                    <div class="ads-grid" id="adsGrid">
+                        <div class="loading-placeholder">Cargando anuncios...</div>
+                    </div>
+                </div>
+
+                
+                <div id="accounts-section" class="admin-section-content">
+                    <div class="section-header">
+                        <h2><i class="fas fa-key"></i> Bases de Cuentas</h2>
+                    </div>
+
+                    <div class="settings-grid">
+                        <div class="setting-group">
+                            <h3>Crear Base</h3>
+                            <form id="accountPoolForm">
+                                <div class="form-group">
+                                    <label for="accountPoolName">Nombre de la base (ej. Disney)</label>
+                                    <input type="text" id="accountPoolName" class="form-input" required>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">Crear Base</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="setting-group">
+                            <h3>Agregar Cuenta</h3>
+                            <form id="accountAddForm">
+                                <div class="form-group">
+                                    <label for="accountPoolSelect">Base</label>
+                                    <select id="accountPoolSelect" class="form-input" required></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="accountEmail">Correo</label>
+                                    <input type="email" id="accountEmail" class="form-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="accountPassword">Contraseña</label>
+                                    <input type="text" id="accountPassword" class="form-input" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="accountExpirationDays">Duración (días)</label>
+                                    <input type="number" id="accountExpirationDays" class="form-input" value="30" min="1" required>
+                                    <small>Tiempo de vigencia que tendrá cada entrega desde la fecha de compra.</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="accountMaxProfiles">Perfiles máximos</label>
+                                    <input type="number" id="accountMaxProfiles" class="form-input" value="4" min="1" required>
+                                    <small>Por defecto 4 perfiles por cuenta.</small>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">Guardar Cuenta</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="accounts-table-container">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Base</th>
+                                    <th>Cuentas disponibles</th>
+                                    <th>Perfiles usados</th>
+                                    <th>Total</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="accountsTableBody">
+                                <tr><td colspan="5" class="loading-row">Cargando bases...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                
+                <div id="analytics-section" class="admin-section-content">
+                    <h2><i class="fas fa-chart-bar"></i> Analíticas y Estadísticas</h2>
+                    
+                    <div class="analytics-grid">
+                        <div class="chart-card">
+                            <div class="chart-icon"><i class="fas fa-chart-line"></i></div>
+                            <h3>Ventas por Mes</h3>
+                            <div class="chart-placeholder">
+                                <p>Gráfico de ventas mensuales</p>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-card">
+                            <div class="chart-icon"><i class="fas fa-trophy"></i></div>
+                            <h3>Productos Más Vendidos</h3>
+                            <div class="chart-placeholder">
+                                <p>Top productos</p>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-card">
+                            <div class="chart-icon"><i class="fas fa-users"></i></div>
+                            <h3>Actividad de Usuarios</h3>
+                            <div class="chart-placeholder">
+                                <p>Estadísticas de usuarios</p>
+                            </div>
+                        </div>
+                        
+                        <div class="chart-card">
+                            <div class="chart-icon"><i class="fas fa-coins"></i></div>
+                            <h3>Ingresos por Categoría</h3>
+                            <div class="chart-placeholder">
+                                <p>Distribución de ingresos</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div id="settings-section" class="admin-section-content">
+                    <h2><i class="fas fa-sliders-h"></i> Configuración del Sistema</h2>
+                    
+                    <div class="settings-grid">
+                        <div class="setting-group">
+                            <h3>Configuración de Monedas</h3>
+                            <form id="coinSettingsForm">
+                                <div class="form-group">
+                                    <label>Bono de bienvenida</label>
+                                    <input type="number" id="welcomeBonus" class="form-input" value="10">
+                                </div>
+                                <div class="form-group">
+                                    <label>Tasa de cambio (10 monedas)</label>
+                                    <input type="number" id="exchangeRate" class="form-input" value="5.00" step="0.01">
+                                </div>
+                                <button type="submit" class="btn btn-primary">Guardar Configuración</button>
+                            </form>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <h3>Configuración General</h3>
+                            <form id="generalSettingsForm">
+                                <div class="form-group">
+                                    <label>Nombre del sitio</label>
+                                    <input type="text" id="siteName" class="form-input" value="ADDUXSHOP">
+                                </div>
+                                <div class="form-group">
+                                    <label>Email de soporte</label>
+                                    <input type="email" id="supportEmail" class="form-input" value="support@adduxshop.com">
+                                </div>
+                                <div class="form-group">
+                                    <label>Tema de color</label>
+                                    <select id="themeSelect" class="form-input">
+                                        <option value="midnight">Midnight (mint + índigo)</option>
+                                        <option value="aurora">Aurora (cian + ámbar)</option>
+                                        <option value="obsidian">Obsidian (azul + esmeralda)</option>
+                                        <option value="ember">Ember (ámbar + violeta + teal)</option>
+                                        <option value="luxe">Luxe (oro + turquesa)</option>
+                                        <option value="velvet">Velvet (ciruela + coral)</option>
+                                        <option value="glacier">Glacier (cobalto + hielo)</option>
+                                        <option value="forest">Forest (verde oscuro suave)</option>
+                                    </select>
+                                    <small>Aplica a todo el sitio. Se guarda al instante.</small>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Guardar Configuración</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                
+                <div id="promos-section" class="admin-section-content">
+                    <div class="section-header">
+                        <h2><i class="fas fa-ticket-alt"></i> Códigos Promocionales</h2>
+                        <button class="btn btn-primary" onclick="showPromoForm()">
+                            <i class="fas fa-plus"></i> Añadir Código
+                        </button>
+                    </div>
+
+                    <div class="settings-grid">
+                        <div class="setting-group">
+                            <h3 id="promoFormHeading">Crear Código</h3>
+                            <p id="promoEditIndicator" class="text-muted" style="display: none;">Editando un código existente</p>
+                            <form id="promoForm">
+                                <div class="form-group">
+                                    <label for="promoCodeInput">Código (mayúsculas)</label>
+                                    <input type="text" id="promoCodeInput" class="form-input" placeholder="EJEMPLO10" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="promoDiscountInput">Descuento (%)</label>
+                                    <input type="number" id="promoDiscountInput" class="form-input" min="1" max="100" value="10" required>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">Guardar Código</button>
+                                    <button type="button" id="promoCancelEditBtn" class="btn btn-outline" style="display: none;">Cancelar edición</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="setting-group">
+                            <h3>Códigos Existentes</h3>
+                            <div class="promo-list">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Código</th>
+                                            <th>Descuento</th>
+                                            <th>Creado</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="promoTableBody">
+                                        <tr><td colspan="4" class="loading-row">Cargando códigos...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                
+                <div id="communities-section" class="admin-section-content">
+                    <div class="section-header">
+                        <h2><i class="fas fa-users"></i> Comunidades</h2>
+                    </div>
+
+                    <div class="settings-grid">
+                        <div class="setting-group">
+                            <h3>Agregar comunidad</h3>
+                            <form id="communityForm">
+                                <div class="form-group">
+                                    <label for="communityName">Nombre de la comunidad</label>
+                                    <input type="text" id="communityName" class="form-input" placeholder="Ej. Comunidad VIP" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="communityType">Tipo</label>
+                                    <select id="communityType" class="form-input" required>
+                                        <option value="whatsapp">WhatsApp</option>
+                                        <option value="discord">Discord</option>
+                                        <option value="telegram">Telegram</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="communityLink">Link de invitación</label>
+                                    <input type="url" id="communityLink" class="form-input" placeholder="https://" required>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-primary">Guardar</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <div class="setting-group">
+                            <h3>Comunidades activas</h3>
+                            <div id="communitiesList" class="communities-list">Aún no hay comunidades</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="productModalTitle"><i class="fas fa-plus"></i> <span id="productModalTitleText">Añadir Producto</span></h3>
+                <button class="modal-close" onclick="closeProductModalWrapper()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="productForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productTitle">Título</label>
+                            <input type="text" id="productTitle" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="productCategory">Categoría</label>
+                            <select id="productCategory" class="form-input" required>
+                                
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="productDescription">Descripción</label>
+                        <textarea id="productDescription" class="form-input" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="productPrice">Precio (monedas)</label>
+                            <input type="number" id="productPrice" class="form-input" min="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="productDiscount">Descuento (monedas)</label>
+                            <input type="number" id="productDiscount" class="form-input" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="productStock">Stock</label>
+                            <input type="number" id="productStock" class="form-input" min="0" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="productImage">URL de Imagen</label>
+                        <input type="url" id="productImage" class="form-input" placeholder="https://...">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="productAccountPool">Base de cuentas (opcional)</label>
+                        <select id="productAccountPool" class="form-input">
+                            <option value="">Sin base</option>
+                        </select>
+                        <small>Selecciona el servicio (ej. /disney) para entregar cuentas al comprar.</small>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" onclick="closeProductModalWrapper()">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            Guardar Producto
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    
+    <div id="adModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-bullhorn"></i> <span>Añadir Anuncio</span></h3>
+                <button class="modal-close" onclick="closeAdModalWrapper()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="adForm">
+                            <div class="form-group">
+                                <label for="adTitle">Nombre interno</label>
+                                <input type="text" id="adTitle" class="form-input" placeholder="Ej. Banner Disney" required>
+                                <small>Solo para identificar el anuncio en el panel.</small>
+                            </div>
+
+                    <div class="form-group">
+                        <label for="adImageUrl">URL de imagen del carrusel</label>
+                        <input type="url" id="adImageUrl" class="form-input" placeholder="https://..." required>
+                        <small>Solo la imagen. Se mostrará en el carrusel automático.</small>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" onclick="closeAdModalWrapper()">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            Guardar Anuncio
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user"></i> Editar Usuario</h3>
+                <button class="modal-close" onclick="closeUserModalWrapper()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm">
+                    <div class="form-group">
+                        <label>Usuario</label>
+                        <input type="text" id="editUsername" class="form-input" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Monedas</label>
+                        <input type="number" id="editCoins" class="form-input" min="0">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Rol</label>
+                        <select id="editRole" class="form-input">
+                            <option value="user">Usuario</option>
+                            <option value="admin">Administrador</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Estado</label>
+                        <select id="editStatus" class="form-input">
+                            <option value="active">Activo</option>
+                            <option value="banned">Baneado</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" onclick="closeUserModalWrapper()">
+                            Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            Guardar Cambios
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    
+    <div id="accountModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-key"></i> Editar Cuenta <span id="accountModalPoolName"></span></h3>
+                <button class="modal-close" onclick="closeAccountModalWrapper()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted">Selecciona una cuenta de la base para editar correo y contraseña.</p>
+                <div id="accountEntriesList" class="account-entries-list">
+                    <div class="loading-placeholder">Cargando cuentas...</div>
+                </div>
+                <form id="accountEditForm" class="mt-3">
+                    <input type="hidden" id="accountEditId">
+                    <div class="form-group">
+                        <label for="accountEditEmail">Correo</label>
+                        <input type="email" id="accountEditEmail" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="accountEditPassword">Contraseña</label>
+                        <input type="text" id="accountEditPassword" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="accountEditExpirationDays">Duración (días)</label>
+                        <input type="number" id="accountEditExpirationDays" class="form-input" min="1" value="30" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="accountEditMaxProfiles">Perfiles máximos</label>
+                        <input type="number" id="accountEditMaxProfiles" class="form-input" min="1" value="4" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-outline" onclick="closeAccountModalWrapper()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    
+    <script type="module" src="public/js/base.js"></script>
+    
+    
+    <script>
+
+        window.adminLoadedPromise = {
+            resolve: null,
+            promise: null
+        };
+        
+        window.adminLoadedPromise.promise = new Promise(resolve => {
+            window.adminLoadedPromise.resolve = resolve;
+        });
+
+        async function checkAdminAccess() {
+            // Show login form and bind to /api/admin/verify
+            document.getElementById('adminLogin').style.display = 'flex';
+            document.getElementById('adminPanel').style.display = 'none';
+
+            const form = document.getElementById('adminLoginForm');
+            if (!form._bound) {
+                form.addEventListener('submit', async (ev) => {
+                    ev.preventDefault();
+                    const user = document.getElementById('adminUser').value.trim();
+                    const pass = document.getElementById('adminPass').value;
+                    const errEl = document.getElementById('loginError');
+                    errEl.style.display = 'none';
+
+                    try {
+                        const r = await fetch('/api/admin/verify', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ user, pass })
+                        });
+                        if (r.ok) {
+                            document.getElementById('adminLogin').style.display = 'none';
+                            document.getElementById('adminPanel').style.display = 'block';
+                            loadAdminScript();
+                            return;
+                        }
+                        const data = await r.json().catch(()=>({message:'Error'}));
+                        if (r.status === 401) {
+                            errEl.textContent = data.message || 'Credenciales inválidas';
+                        } else {
+                            errEl.textContent = data.message || 'Error al iniciar sesión';
+                        }
+                        errEl.style.display = 'block';
+                    } catch (err) {
+                        console.error('Login error', err);
+                        errEl.textContent = 'Error de red';
+                        errEl.style.display = 'block';
+                    }
+                });
+                form._bound = true;
+
+                // password toggle
+                const tog = document.getElementById('togglePass');
+                tog.innerHTML = '<i class="fas fa-eye"></i>';
+                tog.addEventListener('click', () => {
+                    const p = document.getElementById('adminPass');
+                    if (p.type === 'password') { p.type = 'text'; tog.innerHTML = '<i class="fas fa-eye-slash"></i>'; }
+                    else { p.type = 'password'; tog.innerHTML = '<i class="fas fa-eye"></i>'; }
+                });
+            }
+            return false;
+        }
+        // admin.js is loaded directly; server enforces Basic Auth before serving this file
+
+        function loadAdminScript() {
+
+            if (window.adminJSReady) {
+                console.log('�o. Admin.js already loaded, skipping...');
+                if (window.adminLoadedPromise.resolve) {
+                    window.adminLoadedPromise.resolve();
+                }
+                return;
+            }
+
+            if (document.querySelector('script[src="public/js/admin.js"]')) {
+                console.log('⏳ Admin.js already loading, skipping duplicate...');
+                return;
+            }
+
+            const adminScript = document.createElement('script');
+            adminScript.type = 'module';
+            adminScript.src = 'public/js/admin.js';
+            document.body.appendChild(adminScript);
+            console.log('Admin script injected');
+        }
+
+        // optional logout helper
+        async function adminLogout() {
+            try {
+                await fetch('/api/admin/logout', { method: 'POST' });
+            } catch(e){}
+            // clear and reload
+            window.location.reload();
+        }
+
+        function callAdminFunction(functionName, ...args) {
+
+            console.log(`�Y"� Attempting to call function: ${functionName}`);
+
+            if (window[functionName] && typeof window[functionName] === 'function') {
+                console.log(`�o. Function ${functionName} available, calling immediately...`);
+                window[functionName](...args);
+                return;
+            }
+
+            if (window.adminLoadedPromise && window.adminLoadedPromise.promise) {
+                console.log(`⏳ Waiting for admin.js to load before calling ${functionName}...`);
+                window.adminLoadedPromise.promise.then(() => {
+                    if (window[functionName] && typeof window[functionName] === 'function') {
+                        console.log(`�o. Now calling ${functionName}(...) after admin.js loaded`);
+                        window[functionName](...args);
+                    } else {
+                        console.error(`�O CRITICAL: Function ${functionName} still not available even after admin.js loaded!`);
+                        console.error('Available functions:', Object.keys(window).filter(k => typeof window[k] === 'function').slice(0, 10));
+                    }
+                }).catch(err => {
+                    console.error(`�O Promise error waiting for admin.js: ${err}`);
+                });
+            } else {
+                console.error(`�O CRITICAL: adminLoadedPromise not found!`);
+                console.error('window.adminLoadedPromise:', window.adminLoadedPromise);
+                console.log('This likely means loadAdminScript() was never called');
+            }
+        }
+
+        function showAdminSectionWrapper(section) {
+            callAdminFunction('showAdminSection', section);
+        }
+
+        function showProductModalWrapper() {
+            callAdminFunction('showProductModal');
+        }
+
+        function showAdModalWrapper() {
+            callAdminFunction('showAdModal');
+        }
+
+        function closeProductModalWrapper() {
+            callAdminFunction('closeProductModal');
+        }
+
+        function closeAdModalWrapper() {
+            callAdminFunction('closeAdModal');
+        }
+
+        function closeUserModalWrapper() {
+            callAdminFunction('closeUserModal');
+        }
+
+        function editProductWrapper(productId) {
+            callAdminFunction('editProduct', productId);
+        }
+
+        function deleteProductWrapper(productId) {
+            callAdminFunction('deleteProduct', productId);
+        }
+
+        function editUserWrapper(userId) {
+            callAdminFunction('editUser', userId);
+        }
+
+        function banUserWrapper(userId) {
+            callAdminFunction('banUser', userId);
+        }
+
+        function unbanUserWrapper(userId) {
+            callAdminFunction('unbanUser', userId);
+        }
+
+        function editAdWrapper(adId) {
+            callAdminFunction('editAd', adId);
+        }
+
+        function deleteAdWrapper(adId) {
+            callAdminFunction('deleteAd', adId);
+        }
+
+        function goBackHome() {
+            window.location.href = '/';
+        }
+
+        console.log('�Y"< Admin.html script loaded, current readyState:', document.readyState);
+        
+        function initializeAdmin() {
+            console.log('�Ys? Initializing admin panel...');
+            checkAdminAccess();
+        }
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeAdmin);
+        } else {
+            initializeAdmin();
+        }
+
+    </script>
+</body>
+</html>
+
+
+
+

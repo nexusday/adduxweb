@@ -1,0 +1,49 @@
+{
+  "name": "adduxshop",
+  "version": "1.0.0",
+  "description": "ADDUXSHOP - Plataforma de venta digital y recargas de monedas virtuales",
+  "main": "index.html",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "live-server --port=3000 --open=index.html --watch=css,js,html",
+    "serve": "node index.js",
+    "build": "echo 'No build process needed for static site'",
+    "deploy": "echo 'Deploy to your hosting service'",
+    "test": "echo 'No tests specified yet'"
+  },
+  "keywords": [
+    "streaming",
+    "venta-digital",
+    "monedas-virtuales",
+    "firebase",
+    "ecommerce",
+    "plataforma-digital"
+  ],
+  "author": "ADDUXSHOP Team",
+  "license": "MIT",
+  "devDependencies": {
+    "live-server": "^1.2.2"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "firebase-admin": "^11.0.0",
+    "node-fetch": "^2.6.7",
+    "dotenv": "^16.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/adduxshop.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/adduxshop/issues"
+  },
+  "homepage": "https://github.com/your-username/adduxshop#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+}
