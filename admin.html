@@ -133,6 +133,9 @@
                 <button class="menu-btn" onclick="showAdminSectionWrapper('recharges')" data-section="recharges">
                     <i class="fas fa-credit-card"></i> Recargas
                 </button>
+                <button class="menu-btn" onclick="showAdminSectionWrapper('notifications')" data-section="notifications">
+                    <i class="fas fa-bell"></i> Notificaciones
+                </button>
                 <button class="menu-btn" onclick="showAdminSectionWrapper('communities')" data-section="communities">
                     <i class="fas fa-users"></i> Comunidades
                 </button>
@@ -475,6 +478,94 @@
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <div id="notifications-section" class="admin-section-content">
+                    <div class="section-header">
+                        <h2><i class="fas fa-bell"></i> Nueva Notificación</h2>
+                        <p>Envía notificaciones a los usuarios que aceptaron recibirlas.</p>
+                    </div>
+                    <form id="notificationForm">
+                        <div class="form-group">
+                            <label for="notifTitle"><i class="fas fa-bullhorn"></i> Título de la Notificación *</label>
+                            <input type="text" id="notifTitle" class="form-input" placeholder="Ej: Mantenimiento programado" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="notifMessage">Mensaje *</label>
+                            <textarea id="notifMessage" class="form-input" rows="4" placeholder="Escribe el mensaje de la notificación..." maxlength="500" required></textarea>
+                            <div class="text-muted">0/500 caracteres</div>
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo de Notificación</label>
+                            <div class="custom-select" id="notifTypeSelect" aria-haspopup="listbox">
+                                <button type="button" class="custom-select-button" id="notifTypeButton">
+                                    <i class="fas fa-info-circle" id="notifTypeIcon"></i>
+                                    <span class="custom-select-label" id="notifTypeLabel">Información</span>
+                                    <i class="fas fa-caret-down select-caret"></i>
+                                </button>
+                                <ul class="custom-select-list" id="notifTypeList" role="listbox" tabindex="-1">
+                                    <li data-value="info" data-icon="fas fa-info-circle" class="active">Información</li>
+                                    <li data-value="warning" data-icon="fas fa-exclamation-triangle">Advertencia</li>
+                                    <li data-value="success" data-icon="fas fa-check-circle">Éxito</li>
+                                    <li data-value="urgent" data-icon="fas fa-bell">Urgente</li>
+                                </ul>
+                            </div>
+                            <input type="hidden" id="notifType" value="info">
+                            <style>
+                                .custom-select { position: relative; display: inline-block; width: 100%; }
+                                /* Button: solid background matching dark surface, non-transparent */
+                                .custom-select-button { width: 100%; display:flex; align-items:center; justify-content:space-between; gap:8px; padding:10px; border-radius:6px; border:1px solid var(--border); background:var(--surface-mid); color:var(--text); }
+                                .custom-select-button i { margin-right:8px; }
+                                /* Dropdown list: solid, opaque background with shadow to separate from page */
+                                .custom-select-list { display:none; position:absolute; left:0; right:0; margin-top:6px; background:var(--surface-mid); border:1px solid var(--border); border-radius:8px; max-height:220px; overflow:auto; z-index:1400; padding:6px 0; box-shadow: 0 8px 24px rgba(0,0,0,0.6); }
+                                .custom-select-list li { list-style:none; padding:10px 14px; cursor:pointer; display:flex; align-items:center; gap:10px; color:var(--text); }
+                                .custom-select-list li:hover { background:var(--surface-2); }
+                                .custom-select-list li.active { background:var(--surface-3); }
+                            </style>
+                            <script>
+                                (function(){
+                                    const btn = document.getElementById('notifTypeButton');
+                                    const list = document.getElementById('notifTypeList');
+                                    const hidden = document.getElementById('notifType');
+                                    const label = document.getElementById('notifTypeLabel');
+                                    const icon = document.getElementById('notifTypeIcon');
+                                    if (!btn || !list || !hidden) return;
+
+                                    function closeList(){ list.style.display='none'; }
+                                    function openList(){ list.style.display='block'; }
+
+                                    btn.addEventListener('click', (e)=>{ e.stopPropagation(); if (list.style.display==='block') closeList(); else openList(); });
+
+                                    list.querySelectorAll('li').forEach(li=>{
+                                        li.addEventListener('click', ()=>{
+                                            const val = li.dataset.value;
+                                            const iconCls = li.dataset.icon || 'fas fa-info-circle';
+                                            hidden.value = val;
+                                            // update label and icon
+                                            label.textContent = li.textContent.trim();
+                                            icon.className = iconCls;
+                                            // mark active
+                                            list.querySelectorAll('li').forEach(x=>x.classList.remove('active'));
+                                            li.classList.add('active');
+                                            closeList();
+                                        });
+                                    });
+
+                                    document.addEventListener('click', (e)=>{ if (!btn.contains(e.target) && !list.contains(e.target)) closeList(); });
+                                })();
+                            </script>
+                        </div>
+                        <div class="form-group">
+                            <label>Opciones de Envío</label>
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <label><input type="checkbox" id="optPush" checked> Enviar notificación push del navegador</label>
+                                <label><input type="checkbox" id="optHeader" checked> Mostrar en notificaciones del header</label>
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Enviar Notificación</button>
+                        </div>
+                    </form>
                 </div>
 
                 

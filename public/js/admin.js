@@ -35,8 +35,32 @@ function loadAdminData() {
     loadPromoCodes();
     loadCommunities();
     loadPendingRecharges();
+    // setup notification form handler
+    const notifForm = document.getElementById('notificationForm');
+    if (notifForm) notifForm.addEventListener('submit', handleNotificationSubmit);
     loadStats();
     loadThemeSetting();
+}
+
+async function handleNotificationSubmit(e) {
+    e.preventDefault();
+    const title = document.getElementById('notifTitle')?.value?.trim();
+    const message = document.getElementById('notifMessage')?.value?.trim();
+    const type = document.getElementById('notifType')?.value || 'info';
+    const pushOpt = document.getElementById('optPush')?.checked;
+    const headerOpt = document.getElementById('optHeader')?.checked;
+    if (!title || !message) return showToast('Completa título y mensaje', 'error');
+    showLoader();
+    try {
+        const payload = { title, message, type, push: !!pushOpt, header: !!headerOpt, createdAt: new Date().toISOString(), author: window.ADDUXSHOP.userData?.username || 'admin' };
+        // push to broadcast notifications
+        await push(ref(database, 'notifications/broadcast'), payload);
+        showToast('Notificación enviada', 'success');
+        document.getElementById('notificationForm')?.reset();
+    } catch (err) {
+        console.error('Error sending notification:', err);
+        showToast('Error al enviar notificación', 'error');
+    } finally { hideLoader(); }
 }
 
 function setupEventListeners() {

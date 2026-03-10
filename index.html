@@ -191,6 +191,72 @@
     
     <script type="module" src="public/js/base.js"></script>
     <script type="module" src="public/js/app.js"></script>
+    <!-- Notification permission floating prompt -->
+    <div id="notifyPrompt" class="notify-prompt" style="display:none;">
+        <div class="notify-prompt-card">
+            <div class="notify-prompt-content">
+                <strong>Recibe notificaciones</strong>
+                <p>Recibe notificaciones (recargas, descuentos, nuevas publicaciones y más)</p>
+            </div>
+            <div class="notify-prompt-actions">
+                <button id="notifyAcceptBtn" class="btn btn-primary">✓ Permitir</button>
+                <button id="notifyCloseBtn" class="btn btn-outline">×</button>
+            </div>
+        </div>
+    </div>
+    <style>
+    .notify-prompt { position: fixed; right: 18px; bottom: 18px; z-index: 1600; }
+    .notify-prompt-card { display:flex; gap:12px; align-items:center; padding:12px 14px; background:var(--surface-mid); border:1px solid var(--border); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.5); }
+    .notify-prompt-content p{ margin:0; font-size:0.9rem; color:var(--text-secondary); }
+    .notify-prompt-actions { display:flex; gap:8px; }
+    </style>
+    <script>
+    (function(){
+        const prompt = document.getElementById('notifyPrompt');
+        const acceptBtn = document.getElementById('notifyAcceptBtn');
+        const closeBtn = document.getElementById('notifyCloseBtn');
+        // transient flag (in-memory) prevents re-show until page reload
+        let sessionDismissed = false;
+
+        function shouldShowPrompt(){
+            try{
+                // if already granted or user explicitly allowed, don't show
+                if (typeof Notification !== 'undefined' && Notification.permission === 'granted') return false;
+                if (localStorage.getItem('addux_notify_allowed') === 'true') return false;
+                // respect current-page dismissal (only in-memory)
+                if (sessionDismissed) return false;
+            } catch (e) {}
+            return true;
+        }
+
+        function showPrompt(){ if (prompt) prompt.style.display='block'; }
+        function hidePrompt(){ if (prompt) prompt.style.display='none'; }
+
+        if (shouldShowPrompt()) showPrompt();
+
+        acceptBtn.addEventListener('click', async ()=>{
+            try{
+                const perm = await Notification.requestPermission();
+                if (perm === 'granted'){
+                    try{ localStorage.setItem('addux_notify_allowed','true'); }catch(e){}
+                    showToast('Gracias — habilitaste notificaciones','success');
+                    hidePrompt();
+                } else {
+                    // if user denies or dismisses the browser prompt, hide for this page load
+                    showToast('No se activaron las notificaciones','warning');
+                    sessionDismissed = true;
+                    hidePrompt();
+                }
+            }catch(err){ console.error('Notification request error', err); }
+        });
+
+        closeBtn.addEventListener('click', ()=>{
+            // set in-memory flag so the prompt stays hidden until the user reloads the page
+            sessionDismissed = true;
+            hidePrompt();
+        });
+    })();
+    </script>
 </body>
 </html>
 

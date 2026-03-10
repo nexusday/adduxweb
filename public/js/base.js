@@ -82,6 +82,58 @@ window.ADDUXSHOP = window.ADDUXSHOP || {
   userData: null
 };
 
+// Notifications: listen for broadcast and personal notifications
+function initNotificationListeners() {
+  // broadcast notifications
+  try {
+    const broadcastRef = ref(database, 'notifications/broadcast');
+    onValue(broadcastRef, (snapshot) => {
+      if (!snapshot.exists()) return;
+      snapshot.forEach(child => {
+        const n = child.val();
+        handleIncomingNotification(n);
+      });
+    });
+  } catch (err) { console.warn('broadcast notif listener error', err); }
+
+  // per-user notifications (optional)
+  window.addEventListener('authStateChanged', (e) => {
+    const user = window.ADDUXSHOP.currentUser;
+    if (!user) return;
+    try {
+      const userRef = ref(database, `notifications/user/${user.uid}`);
+      onValue(userRef, (snapshot) => {
+        if (!snapshot.exists()) return;
+        snapshot.forEach(child => {
+          const n = child.val();
+          handleIncomingNotification(n);
+        });
+      });
+    } catch (err) { console.warn('user notif listener error', err); }
+  });
+}
+
+function handleIncomingNotification(n) {
+  try {
+    const title = n.title || 'Notificación';
+    const body = n.message || '';
+    const type = n.type || 'info';
+    // show header / in-app toast first
+    try { showToast(body, 'info'); } catch(e){}
+    // show native browser notification if allowed
+    const localAllowed = (window.ADDUXSHOP.userData && window.ADDUXSHOP.userData.notificationsAllowed) || localStorage.getItem('addux_notify_allowed') === 'true';
+    if (Notification && Notification.permission === 'granted' && localAllowed) {
+      try { new Notification(title, { body, icon: n.icon || '/imagenes/logo-shop.png' }); } catch(e) { console.warn('notification show error', e); }
+    }
+  } catch (err) { console.error('handleIncomingNotification error', err); }
+}
+
+// initialize listeners once auth is ready
+window.addEventListener('authStateChanged', () => {
+  // ensure only initialized once
+  if (!window._addux_notif_init) { initNotificationListeners(); window._addux_notif_init = true; }
+});
+
 // Expose helper to sign in with custom token (used by admin login flow)
 window.signInWithCustomToken = async function(token) {
   try {
