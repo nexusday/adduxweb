@@ -4,7 +4,7 @@
 
 
 RewriteEngine On
-
+RewriteBase /
 
 # Friendly routes -> serve the corresponding html files without redirecting
 RewriteRule ^panel/?$ admin.html [L]

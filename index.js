@@ -8,7 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const BASE = path.resolve(__dirname);
 
-// Admin credentials from .env
+
 const ADMIN_USER = process.env.ADMIN_USER;
 const ADMIN_PASS = process.env.ADMIN_PASS;
 if (!ADMIN_USER || !ADMIN_PASS) {
@@ -17,7 +17,7 @@ if (!ADMIN_USER || !ADMIN_PASS) {
 
 app.use(express.json());
 
-// Deny direct access to sensitive files
+
 const denyList = [
   /^\/\.env$/i,
   /^\/serviceAccountKey\.json$/i,
@@ -32,7 +32,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// Simple endpoint: verify admin credentials from client-side login form
+
 app.post('/api/admin/verify', (req, res) => {
   const { user, pass } = req.body || {};
   if (!ADMIN_USER || !ADMIN_PASS) {
@@ -44,7 +44,7 @@ app.post('/api/admin/verify', (req, res) => {
   return res.status(401).json({ ok: false, message: 'Invalid credentials' });
 });
 
-// Friendly routes -> serve the corresponding html files without redirecting
+
 const friendlyMap = {
   '/index.html': '/',
   '/perfil.html': '/perfil',
@@ -65,10 +65,10 @@ app.use((req, res, next) => {
   next();
 });
 
-// Serve static files
+
 app.use(express.static(BASE));
 
-// Routes
+
 app.get('/', (req, res) => res.sendFile(path.join(BASE, 'index.html')));
 app.get('/perfil', (req, res) => res.sendFile(path.join(BASE, 'perfil.html')));
 app.get('/registrar', (req, res) => res.sendFile(path.join(BASE, 'register.html')));
@@ -77,7 +77,7 @@ app.get('/carrito-compra', (req, res) => res.sendFile(path.join(BASE, 'carrito.h
 app.get('/panel', (req, res) => res.sendFile(path.join(BASE, 'admin.html')));
 app.get('/comunidades', (req, res) => res.sendFile(path.join(BASE, 'comunidades.html')));
 
-// Fallback to SPA index
+
 app.use((req, res) => res.sendFile(path.join(BASE, 'index.html')));
 
 app.listen(PORT, () => console.log(`Servidor Express escuchando en http://localhost:${PORT}`));

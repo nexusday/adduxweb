@@ -725,7 +725,7 @@
         });
 
         async function checkAdminAccess() {
-            // Show login form and bind to /api/admin/verify
+            
             document.getElementById('adminLogin').style.display = 'flex';
             document.getElementById('adminPanel').style.display = 'none';
 
@@ -765,7 +765,7 @@
                 });
                 form._bound = true;
 
-                // password toggle
+                
                 const tog = document.getElementById('togglePass');
                 tog.innerHTML = '<i class="fas fa-eye"></i>';
                 tog.addEventListener('click', () => {
@@ -776,7 +776,7 @@
             }
             return false;
         }
-        // admin.js is loaded directly; server enforces Basic Auth before serving this file
+        
 
         function loadAdminScript() {
 
@@ -800,12 +800,12 @@
             console.log('Admin script injected');
         }
 
-        // optional logout helper
+        
         async function adminLogout() {
             try {
                 await fetch('/api/admin/logout', { method: 'POST' });
             } catch(e){}
-            // clear and reload
+            
             window.location.reload();
         }
 
