@@ -52,9 +52,34 @@ async function handleNotificationSubmit(e) {
     if (!title || !message) return showToast('Completa título y mensaje', 'error');
     showLoader();
     try {
-        const payload = { title, message, type, push: !!pushOpt, header: !!headerOpt, createdAt: new Date().toISOString(), author: window.ADDUXSHOP.userData?.username || 'admin' };
-        // push to broadcast notifications
-        await push(ref(database, 'notifications/broadcast'), payload);
+        const basePayload = { title, message, type, createdAt: new Date().toISOString(), author: window.ADDUXSHOP.userData?.username || 'admin' };
+
+        // If header option is set, broadcast to all clients so in-app header toasts show
+        if (headerOpt) {
+            const payload = { ...basePayload, header: true };
+            await push(ref(database, 'notifications/broadcast'), payload);
+        }
+
+        // If push option is set, send per-user notifications only to users who allowed them
+        if (pushOpt) {
+            // read all users and push to those with notificationsAllowed === true
+            const usersSnap = await get(ref(database, 'users'));
+            if (usersSnap.exists()) {
+                usersSnap.forEach(async (child) => {
+                    try {
+                        const u = child.val();
+                        const uid = child.key;
+                        if (u && (u.notificationsAllowed === true || u.notificationsAllowed === 'true')) {
+                            const userPayload = { ...basePayload, push: true };
+                            await push(ref(database, `notifications/user/${uid}`), userPayload);
+                        }
+                    } catch (innerErr) {
+                        console.warn('Error pushing user notification for', child.key, innerErr);
+                    }
+                });
+            }
+        }
+
         showToast('Notificación enviada', 'success');
         document.getElementById('notificationForm')?.reset();
     } catch (err) {

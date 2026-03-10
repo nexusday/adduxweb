@@ -118,12 +118,27 @@ function handleIncomingNotification(n) {
     const title = n.title || 'Notificación';
     const body = n.message || '';
     const type = n.type || 'info';
-    // show header / in-app toast first
-    try { showToast(body, 'info'); } catch(e){}
-    // show native browser notification if allowed
-    const localAllowed = (window.ADDUXSHOP.userData && window.ADDUXSHOP.userData.notificationsAllowed) || localStorage.getItem('addux_notify_allowed') === 'true';
-    if (Notification && Notification.permission === 'granted' && localAllowed) {
-      try { new Notification(title, { body, icon: n.icon || '/imagenes/logo-shop.png' }); } catch(e) { console.warn('notification show error', e); }
+    const isHeader = !!n.header;
+    const isPush = !!n.push;
+
+    // Header/in-app notifications (broadcast) — show toast when header flag is present
+    if (isHeader) {
+      try { showToast(body, type); } catch(e){}
+    }
+
+    // Push notifications (per-user) — show native browser notification only when allowed
+    if (isPush) {
+      const localAllowed = (window.ADDUXSHOP.userData && window.ADDUXSHOP.userData.notificationsAllowed) || localStorage.getItem('addux_notify_allowed') === 'true';
+      if (Notification && Notification.permission === 'granted' && localAllowed) {
+        try { new Notification(title, { body, icon: n.icon || '/imagenes/logo-shop.png' }); } catch(e) { console.warn('notification show error', e); }
+      }
+      // also show in-app toast for push as a fallback
+      try { showToast(body, type); } catch(e){}
+    }
+
+    // Backwards compatibility: if no flags present, show a simple toast
+    if (!isHeader && !isPush) {
+      try { showToast(body, type); } catch(e){}
     }
   } catch (err) { console.error('handleIncomingNotification error', err); }
 }
@@ -142,6 +157,22 @@ window.signInWithCustomToken = async function(token) {
     return true;
   } catch (err) {
     console.error('signInWithCustomToken error:', err);
+    return false;
+  }
+};
+
+// Update user's notifications preference in DB
+window.setNotificationsAllowed = async function(allowed) {
+  try {
+    const user = window.ADDUXSHOP?.currentUser;
+    if (!user) return false;
+    const userRef = ref(database, `users/${user.uid}`);
+    await update(userRef, { notificationsAllowed: !!allowed, updatedAt: new Date().toISOString() });
+    // also update local cache
+    if (window.ADDUXSHOP.userData) window.ADDUXSHOP.userData.notificationsAllowed = !!allowed;
+    return true;
+  } catch (err) {
+    console.warn('setNotificationsAllowed error', err);
     return false;
   }
 };

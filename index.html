@@ -239,6 +239,8 @@
                 const perm = await Notification.requestPermission();
                 if (perm === 'granted'){
                     try{ localStorage.setItem('addux_notify_allowed','true'); }catch(e){}
+                    // persist on user profile if logged in
+                    try{ if (window.setNotificationsAllowed) await window.setNotificationsAllowed(true); }catch(e){ console.warn('Could not sync notif setting to profile', e); }
                     showToast('Gracias — habilitaste notificaciones','success');
                     hidePrompt();
                 } else {
