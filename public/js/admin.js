@@ -35,57 +35,8 @@ function loadAdminData() {
     loadPromoCodes();
     loadCommunities();
     loadPendingRecharges();
-    // setup notification form handler
-    const notifForm = document.getElementById('notificationForm');
-    if (notifForm) notifForm.addEventListener('submit', handleNotificationSubmit);
     loadStats();
     loadThemeSetting();
-}
-
-async function handleNotificationSubmit(e) {
-    e.preventDefault();
-    const title = document.getElementById('notifTitle')?.value?.trim();
-    const message = document.getElementById('notifMessage')?.value?.trim();
-    const type = document.getElementById('notifType')?.value || 'info';
-    const pushOpt = document.getElementById('optPush')?.checked;
-    const headerOpt = document.getElementById('optHeader')?.checked;
-    if (!title || !message) return showToast('Completa título y mensaje', 'error');
-    showLoader();
-    try {
-        const basePayload = { title, message, type, createdAt: new Date().toISOString(), author: window.ADDUXSHOP.userData?.username || 'admin' };
-
-        // If header option is set, broadcast to all clients so in-app header toasts show
-        if (headerOpt) {
-            const payload = { ...basePayload, header: true };
-            await push(ref(database, 'notifications/broadcast'), payload);
-        }
-
-        // If push option is set, send per-user notifications only to users who allowed them
-        if (pushOpt) {
-            // read all users and push to those with notificationsAllowed === true
-            const usersSnap = await get(ref(database, 'users'));
-            if (usersSnap.exists()) {
-                usersSnap.forEach(async (child) => {
-                    try {
-                        const u = child.val();
-                        const uid = child.key;
-                        if (u && (u.notificationsAllowed === true || u.notificationsAllowed === 'true')) {
-                            const userPayload = { ...basePayload, push: true };
-                            await push(ref(database, `notifications/user/${uid}`), userPayload);
-                        }
-                    } catch (innerErr) {
-                        console.warn('Error pushing user notification for', child.key, innerErr);
-                    }
-                });
-            }
-        }
-
-        showToast('Notificación enviada', 'success');
-        document.getElementById('notificationForm')?.reset();
-    } catch (err) {
-        console.error('Error sending notification:', err);
-        showToast('Error al enviar notificación', 'error');
-    } finally { hideLoader(); }
 }
 
 function setupEventListeners() {
@@ -124,6 +75,40 @@ function setupEventListeners() {
 
     const accountEditForm = document.getElementById('accountEditForm');
     if (accountEditForm) accountEditForm.addEventListener('submit', handleAccountEditSubmit);
+    const adminNotifForm = document.getElementById('adminNotificationForm');
+    if (adminNotifForm) adminNotifForm.addEventListener('submit', handleAdminNotificationSubmit);
+}
+
+async function handleAdminNotificationSubmit(e) {
+    e.preventDefault();
+    const userSelect = document.getElementById('notifUserSelect');
+    const title = document.getElementById('notifTitle')?.value?.trim();
+    const body = document.getElementById('notifBody')?.value?.trim();
+    if (!title || !body) return showToast('Completa título y descripción', 'error');
+    showLoader();
+    try {
+        if (!userSelect || !userSelect.value) {
+            // broadcast to all users: write a single broadcast entry
+            const broadcastsRef = ref(database, 'broadcasts');
+            await push(broadcastsRef, { title, body, createdAt: new Date().toISOString() });
+            // determine user count for feedback
+            try {
+                const usersRef = ref(database, 'users');
+                const snapshot = await get(usersRef);
+                const count = snapshot.exists() ? Object.keys(snapshot.val() || {}).length : 0;
+                showToast(`Notificación enviada a ${count} usuarios`, 'success');
+            } catch(e) { showToast('Notificación enviada', 'success'); }
+        } else {
+            const uid = userSelect.value;
+            await push(ref(database, `notifications/${uid}`), { title, body, createdAt: new Date().toISOString(), read:false });
+            showToast('Notificación enviada al usuario', 'success');
+        }
+        
+        const form = document.getElementById('adminNotificationForm'); if (form) form.reset();
+    } catch (err) {
+        console.error('Error sending admin notification:', err);
+        showToast('Error al enviar notificación', 'error');
+    } finally { hideLoader(); }
 }
 
 function loadCategories() {
@@ -509,6 +494,18 @@ async function acceptPending(id) {
 
         // remove pending
         await remove(ref(database, `pendingRecharges/${id}`));
+        // send notification to user
+        try {
+            const notif = {
+                title: 'Recarga aceptada',
+                body: `Se acreditaron ${amount} monedas en tu cuenta.`,
+                createdAt: new Date().toISOString(),
+                read: false,
+                type: 'recharge',
+                meta: { amount }
+            };
+            await push(ref(database, `notifications/${userId}`), notif);
+        } catch (e) { console.error('Error sending notification:', e); }
 
         showToast('Recarga aceptada y monedas acreditadas', 'success');
     } catch (err) {

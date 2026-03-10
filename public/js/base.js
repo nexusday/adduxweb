@@ -24,6 +24,12 @@ export { ref, onValue, update, push, remove, set };
 // expose `get` for one-time reads
 export { get };
 
+// utility: escape HTML for safe insertion
+function escapeHtml(str) {
+  return String(str === undefined || str === null ? '' : str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[s]);
+}
+window.escapeHtml = escapeHtml;
+
 // Create a helper to upload a payment proof (base64) as a pending recharge
 window.uploadPaymentProof = async function(file, amount) {
   if (!file) return false;
@@ -82,73 +88,6 @@ window.ADDUXSHOP = window.ADDUXSHOP || {
   userData: null
 };
 
-// Notifications: listen for broadcast and personal notifications
-function initNotificationListeners() {
-  // broadcast notifications
-  try {
-    const broadcastRef = ref(database, 'notifications/broadcast');
-    onValue(broadcastRef, (snapshot) => {
-      if (!snapshot.exists()) return;
-      snapshot.forEach(child => {
-        const n = child.val();
-        handleIncomingNotification(n);
-      });
-    });
-  } catch (err) { console.warn('broadcast notif listener error', err); }
-
-  // per-user notifications (optional)
-  window.addEventListener('authStateChanged', (e) => {
-    const user = window.ADDUXSHOP.currentUser;
-    if (!user) return;
-    try {
-      const userRef = ref(database, `notifications/user/${user.uid}`);
-      onValue(userRef, (snapshot) => {
-        if (!snapshot.exists()) return;
-        snapshot.forEach(child => {
-          const n = child.val();
-          handleIncomingNotification(n);
-        });
-      });
-    } catch (err) { console.warn('user notif listener error', err); }
-  });
-}
-
-function handleIncomingNotification(n) {
-  try {
-    const title = n.title || 'Notificación';
-    const body = n.message || '';
-    const type = n.type || 'info';
-    const isHeader = !!n.header;
-    const isPush = !!n.push;
-
-    // Header/in-app notifications (broadcast) — show toast when header flag is present
-    if (isHeader) {
-      try { showToast(body, type); } catch(e){}
-    }
-
-    // Push notifications (per-user) — show native browser notification only when allowed
-    if (isPush) {
-      const localAllowed = (window.ADDUXSHOP.userData && window.ADDUXSHOP.userData.notificationsAllowed) || localStorage.getItem('addux_notify_allowed') === 'true';
-      if (Notification && Notification.permission === 'granted' && localAllowed) {
-        try { new Notification(title, { body, icon: n.icon || '/imagenes/logo-shop.png' }); } catch(e) { console.warn('notification show error', e); }
-      }
-      // also show in-app toast for push as a fallback
-      try { showToast(body, type); } catch(e){}
-    }
-
-    // Backwards compatibility: if no flags present, show a simple toast
-    if (!isHeader && !isPush) {
-      try { showToast(body, type); } catch(e){}
-    }
-  } catch (err) { console.error('handleIncomingNotification error', err); }
-}
-
-// initialize listeners once auth is ready
-window.addEventListener('authStateChanged', () => {
-  // ensure only initialized once
-  if (!window._addux_notif_init) { initNotificationListeners(); window._addux_notif_init = true; }
-});
-
 // Expose helper to sign in with custom token (used by admin login flow)
 window.signInWithCustomToken = async function(token) {
   try {
@@ -157,22 +96,6 @@ window.signInWithCustomToken = async function(token) {
     return true;
   } catch (err) {
     console.error('signInWithCustomToken error:', err);
-    return false;
-  }
-};
-
-// Update user's notifications preference in DB
-window.setNotificationsAllowed = async function(allowed) {
-  try {
-    const user = window.ADDUXSHOP?.currentUser;
-    if (!user) return false;
-    const userRef = ref(database, `users/${user.uid}`);
-    await update(userRef, { notificationsAllowed: !!allowed, updatedAt: new Date().toISOString() });
-    // also update local cache
-    if (window.ADDUXSHOP.userData) window.ADDUXSHOP.userData.notificationsAllowed = !!allowed;
-    return true;
-  } catch (err) {
-    console.warn('setNotificationsAllowed error', err);
     return false;
   }
 };
@@ -276,8 +199,213 @@ function loadUserData() {
       window.ADDUXSHOP.isAdmin = userData.role === 'admin';
       updateUI();
       window.dispatchEvent(new CustomEvent('userDataLoaded', { detail: { userData: window.ADDUXSHOP.userData } }));
+        // initialize notifications, broadcasts and broadcast-reads listeners for this user
+        try { initNotificationsListener(); initBroadcastsListener(); initBroadcastReadsListener(); } catch(e) { /* ignore init errors */ }
     }
   });
+
+// Notifications system
+let _knownNotifications = new Set();
+function initNotificationsListener() {
+  if (!window.ADDUXSHOP.currentUser) return;
+  const uid = window.ADDUXSHOP.currentUser.uid;
+  const notifRef = ref(database, `notifications/${uid}`);
+  onValue(notifRef, (snap) => {
+    const prevIds = new Set((_personalNotifications || []).map(x=>x.id));
+    const list = [];
+    if (snap.exists()) {
+      snap.forEach(child => list.push({ id: child.key, ...child.val() }));
+    }
+    // store personal notifications list
+    _personalNotifications = list.map(n => ({ ...n, _source: 'personal' }));
+    updateCombinedNotificationsAndRender();
+    // show toast only for newly added unread personal notifications (after initial load)
+    const newItems = list.filter(x => !prevIds.has(x.id));
+    if (!_personalInitial) {
+      newItems.forEach(n => {
+        if (!n.read) {
+          const nid = n.id;
+          if (!_knownNotifications.has(nid)) {
+            _knownNotifications.add(nid);
+            showToast(`<strong>${escapeHtml(n.title)}</strong><br>${escapeHtml(n.body)}`, 'info');
+          }
+        }
+      });
+    }
+    _personalInitial = false;
+  }, (err) => console.error('notifications listener error', err));
+}
+
+function renderNotificationsUI() {
+  const btn = document.getElementById('notificationsBtn');
+  const badge = document.getElementById('notificationsBadge');
+  const listEl = document.getElementById('notificationsList');
+  const notifs = window.ADDUXSHOP.notifications || [];
+  const unread = notifs.filter(n=>!n.read).length;
+  if (badge) {
+    if (unread>0) { badge.style.display='inline-block'; badge.textContent = String(unread); }
+    else badge.style.display='none';
+  }
+  if (!listEl) return;
+  if (notifs.length === 0) {
+    listEl.innerHTML = '<div style="padding:12px;color:var(--text-muted);">No hay notificaciones</div>';
+    return;
+  }
+  listEl.innerHTML = notifs.map(n => {
+    const cls = n.read ? '' : 'unread';
+    const isBroadcast = !!n.isBroadcast;
+    const raw = n.body || '';
+    const previewText = raw.length > 30 ? raw.slice(0,30) : raw;
+    const previewHtml = escapeHtml(previewText).replace(/\n/g, '<br>') + (raw.length > 30 ? '...' : '');
+    return `<div class="notification-item" style="padding:10px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:8px;">
+      <div style="flex:1;">
+        <div style="font-weight:700;">${escapeHtml(n.title)}${isBroadcast? ' <small style="color:var(--text-muted);font-weight:500;">(Anuncio)</small>':''}</div>
+        <div style="font-size:0.9rem;color:var(--text-secondary);">${previewHtml}</div>
+        <div style="font-size:0.75rem;color:var(--text-muted);margin-top:6px;">${new Date(n.createdAt).toLocaleString()}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+        <button class="btn btn-sm btn-ghost" onclick="openNotificationModal('${n.id}');event.stopPropagation();">Ver</button>
+        ${isBroadcast ? '' : `<button class="btn btn-sm btn-danger" onclick="deleteNotification('${n.id}');event.stopPropagation();">Eliminar</button>`}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// internal lists and helpers to merge personal + broadcasts
+let _personalNotifications = [];
+let _broadcastNotifications = [];
+let _personalInitial = true;
+let _broadcastsInitial = true;
+let _broadcastReads = new Set();
+function updateCombinedNotificationsAndRender() {
+  // map broadcasts to include a stable id prefix to avoid collisions
+  const mappedBroadcasts = (_broadcastNotifications || []).map(b => ({ ...b, id: `broadcast-${b._key}`, isBroadcast: true, _key: b._key, read: _broadcastReads.has(b._key) }));
+  // personal ids keep original keys
+  const combined = [...mappedBroadcasts, ...(_personalNotifications || [])];
+  // dedupe by id
+  const seen = new Set();
+  const unique = [];
+  for (const it of combined) {
+    if (seen.has(it.id)) continue;
+    seen.add(it.id);
+    unique.push(it);
+  }
+  window.ADDUXSHOP.notifications = unique.sort((a,b)=> new Date(b.createdAt) - new Date(a.createdAt));
+  renderNotificationsUI();
+}
+
+// listen to broadcasts
+let _broadcastsListenerInitialized = false;
+function initBroadcastsListener() {
+  if (_broadcastsListenerInitialized) return;
+  _broadcastsListenerInitialized = true;
+  try {
+    const broadcastsRef = ref(database, 'broadcasts');
+    onValue(broadcastsRef, (snap) => {
+      const prevKeys = new Set((_broadcastNotifications || []).map(b=>b._key));
+      const list = [];
+      if (snap.exists()) {
+        snap.forEach(child => list.push({ _key: child.key, ...child.val() }));
+      }
+      _broadcastNotifications = list;
+      updateCombinedNotificationsAndRender();
+      // show toast for newly added broadcasts only after initial load
+      const newBroadcasts = list.filter(b => !prevKeys.has(b._key));
+      if (!_broadcastsInitial) {
+        for (const b of newBroadcasts) {
+          const bid = `broadcast-${b._key}`;
+          if (!_knownNotifications.has(bid) && !_broadcastReads.has(b._key)) {
+            _knownNotifications.add(bid);
+            showToast(`<strong>${escapeHtml(b.title)}</strong><br>${escapeHtml(b.body)}`, 'info');
+          }
+        }
+      }
+      _broadcastsInitial = false;
+    }, (err) => console.error('broadcasts listener error', err));
+  } catch(e) { /* ignore */ }
+}
+
+function initBroadcastReadsListener() {
+  if (!window.ADDUXSHOP.currentUser) return;
+  const uid = window.ADDUXSHOP.currentUser.uid;
+  try {
+    const readsRef = ref(database, `broadcastReads/${uid}`);
+    onValue(readsRef, (snap) => {
+      const setIds = new Set();
+      if (snap.exists()) {
+        snap.forEach(child => setIds.add(child.key));
+      }
+      _broadcastReads = setIds;
+      updateCombinedNotificationsAndRender();
+    }, (err) => { /* ignore */ });
+  } catch(e) { /* ignore */ }
+}
+
+// Debug helper: fetch notifications once and log them
+window.fetchMyNotifications = async function() {
+  if (!window.ADDUXSHOP.currentUser) return null;
+  const uid = window.ADDUXSHOP.currentUser.uid;
+  try {
+    const snap = await get(ref(database, `notifications/${uid}`));
+    if (!snap.exists()) return [];
+    const list = [];
+    snap.forEach(child => list.push({ id: child.key, ...child.val() }));
+    return list;
+  } catch (e) {
+    return null;
+  }
+};
+
+window.toggleNotificationsDropdown = async function(){ const dd = document.getElementById('notificationsDropdown'); if (!dd) return; const opening = dd.style.display !== 'block'; dd.style.display = opening ? 'block' : 'none'; if (opening) {
+    const uid = window.ADDUXSHOP.currentUser && window.ADDUXSHOP.currentUser.uid;
+    if (!uid) return;
+    const notifs = window.ADDUXSHOP.notifications || [];
+    for (const n of notifs) {
+      if (n.isBroadcast && n._key && !_broadcastReads.has(n._key)) {
+        try { await set(ref(database, `broadcastReads/${uid}/${n._key}`), true); } catch(e) { /* ignore */ }
+      }
+    }
+  } };
+
+window.openNotificationModal = async function(id){
+  const notifs = window.ADDUXSHOP.notifications || [];
+  const n = notifs.find(x=>x.id===id);
+  if (!n) return;
+  const fullHtml = escapeHtml(n.body || '').replace(/\n/g, '<br>');
+  const modalHtml = `<div class="modal" id="notifModalTemp" style="display:flex;align-items:center;justify-content:center;position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,0.6);">
+    <div style="background:var(--surface-mid);padding:18px;border-radius:12px;max-width:720px;width:96%;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><h3 style="margin:0">${escapeHtml(n.title)}</h3><button style="font-size:20px;background:transparent;border:none;color:var(--text-main);" onclick="document.getElementById('notifModalTemp').remove();">&times;</button></div>
+      <div style="max-height:60vh;overflow:auto;color:var(--text-secondary);">${fullHtml}</div>
+    </div></div>`;
+  const wrapper = document.createElement('div'); wrapper.innerHTML = modalHtml; document.body.appendChild(wrapper.firstChild);
+  // mark as read only for personal notifications
+  try {
+    if (window.ADDUXSHOP.currentUser) {
+      const uid = window.ADDUXSHOP.currentUser.uid;
+      if (!n.isBroadcast) {
+        await update(ref(database, `notifications/${uid}/${id}`), { read:true });
+      } else if (n._key) {
+        // mark broadcast read for this user
+        await set(ref(database, `broadcastReads/${uid}/${n._key}`), true);
+      }
+    }
+  } catch(e){ /* ignore mark read errors */ }
+};
+
+window.deleteNotification = async function(id) { 
+  const notifs = window.ADDUXSHOP.notifications || [];
+  const n = notifs.find(x=>x.id===id);
+  if (!n) return;
+  if (n.isBroadcast) { showToast('No se puede eliminar un anuncio', 'warning'); return; }
+  try { await remove(ref(database, `notifications/${window.ADDUXSHOP.currentUser.uid}/${id}`)); showToast('Notificación eliminada', 'success'); } catch(e){ showToast('Error al eliminar', 'error'); } };
+
+window.clearAllNotificationsUI = async function(){ 
+  if (!confirm('Eliminar todas las notificaciones?')) return; 
+  const notifs = (window.ADDUXSHOP.notifications || []).filter(n=>!n.isBroadcast);
+  for (const n of notifs) { try { await remove(ref(database, `notifications/${window.ADDUXSHOP.currentUser.uid}/${n.id}`)); } catch(e){ /* ignore */ } } 
+  showToast('Notificaciones eliminadas', 'success'); };
+
+window.openNotificationModal = window.openNotificationModal; // export
 }
 
 function updateUI() {

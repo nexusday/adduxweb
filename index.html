@@ -53,6 +53,17 @@
                         <span id="navCoins" class="coins-amount">0</span>
                     </div>
                     <div class="nav-divider"></div>
+                    <div class="notifications-wrapper" style="position:relative;">
+                        <button id="notificationsBtn" class="btn btn-ghost" aria-label="Notificaciones" onclick="toggleNotificationsDropdown()">
+                            <i class="fas fa-bell"></i>
+                            <span id="notificationsBadge" style="display:none; background:var(--primary); color:white; padding:2px 6px; border-radius:12px; font-size:0.75rem; position:absolute; top:-6px; right:-6px;">0</span>
+                        </button>
+                        <div id="notificationsDropdown" style="display:none; position:absolute; right:0; top:40px; width:320px; background:var(--surface-mid); border:1px solid var(--border); border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.4); z-index:2000;">
+                            <div style="padding:10px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;"><strong>Notificaciones</strong><button class="btn btn-sm btn-ghost" onclick="clearAllNotificationsUI()">Limpiar</button></div>
+                            <div id="notificationsList" style="max-height:300px; overflow:auto;"></div>
+                        </div>
+                    </div>
+                    <div class="nav-divider"></div>
                     <button class="user-menu-btn" id="userMenuBtn" onclick="toggleUserMenu()" aria-label="Menú de usuario">
                         <i data-lucide="user-round"></i>
                     </button>
@@ -191,74 +202,6 @@
     
     <script type="module" src="public/js/base.js"></script>
     <script type="module" src="public/js/app.js"></script>
-    <!-- Notification permission floating prompt -->
-    <div id="notifyPrompt" class="notify-prompt" style="display:none;">
-        <div class="notify-prompt-card">
-            <div class="notify-prompt-content">
-                <strong>Recibe notificaciones</strong>
-                <p>Recibe notificaciones (recargas, descuentos, nuevas publicaciones y más)</p>
-            </div>
-            <div class="notify-prompt-actions">
-                <button id="notifyAcceptBtn" class="btn btn-primary">✓ Permitir</button>
-                <button id="notifyCloseBtn" class="btn btn-outline">×</button>
-            </div>
-        </div>
-    </div>
-    <style>
-    .notify-prompt { position: fixed; right: 18px; bottom: 18px; z-index: 1600; }
-    .notify-prompt-card { display:flex; gap:12px; align-items:center; padding:12px 14px; background:var(--surface-mid); border:1px solid var(--border); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.5); }
-    .notify-prompt-content p{ margin:0; font-size:0.9rem; color:var(--text-secondary); }
-    .notify-prompt-actions { display:flex; gap:8px; }
-    </style>
-    <script>
-    (function(){
-        const prompt = document.getElementById('notifyPrompt');
-        const acceptBtn = document.getElementById('notifyAcceptBtn');
-        const closeBtn = document.getElementById('notifyCloseBtn');
-        // transient flag (in-memory) prevents re-show until page reload
-        let sessionDismissed = false;
-
-        function shouldShowPrompt(){
-            try{
-                // if already granted or user explicitly allowed, don't show
-                if (typeof Notification !== 'undefined' && Notification.permission === 'granted') return false;
-                if (localStorage.getItem('addux_notify_allowed') === 'true') return false;
-                // respect current-page dismissal (only in-memory)
-                if (sessionDismissed) return false;
-            } catch (e) {}
-            return true;
-        }
-
-        function showPrompt(){ if (prompt) prompt.style.display='block'; }
-        function hidePrompt(){ if (prompt) prompt.style.display='none'; }
-
-        if (shouldShowPrompt()) showPrompt();
-
-        acceptBtn.addEventListener('click', async ()=>{
-            try{
-                const perm = await Notification.requestPermission();
-                if (perm === 'granted'){
-                    try{ localStorage.setItem('addux_notify_allowed','true'); }catch(e){}
-                    // persist on user profile if logged in
-                    try{ if (window.setNotificationsAllowed) await window.setNotificationsAllowed(true); }catch(e){ console.warn('Could not sync notif setting to profile', e); }
-                    showToast('Gracias — habilitaste notificaciones','success');
-                    hidePrompt();
-                } else {
-                    // if user denies or dismisses the browser prompt, hide for this page load
-                    showToast('No se activaron las notificaciones','warning');
-                    sessionDismissed = true;
-                    hidePrompt();
-                }
-            }catch(err){ console.error('Notification request error', err); }
-        });
-
-        closeBtn.addEventListener('click', ()=>{
-            // set in-memory flag so the prompt stays hidden until the user reloads the page
-            sessionDismissed = true;
-            hidePrompt();
-        });
-    })();
-    </script>
 </body>
 </html>
 
