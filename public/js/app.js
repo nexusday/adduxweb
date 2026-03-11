@@ -165,7 +165,10 @@ function renderProducts(productsToRender) {
             <p class="card-desc">${(product.description || '').substring(0, 110) || 'Sin descripción disponible.'}</p>
             <div class="card-stock"><span class="stock-badge ${stockClass}"><i class="fas fa-box"></i> ${stockLabel}</span></div>
             <div class="card-footer">
-                <span class="price">${formatCurrency(finalPrice)}${original ? ` <small style="color: var(--text-muted); text-decoration: line-through; font-weight:500;">${original}</small>` : ''}</span>
+                <div class="price-block">
+                    ${original ? `<small class="price-original">${original}</small>` : ''}
+                    <span class="price">${formatCurrency(finalPrice)}</span>
+                </div>
                 <button class="add-btn" onclick="addToCart('${product.id}')" ${soldOut ? 'disabled' : ''} aria-label="Agregar al carrito">
                     <i data-lucide="plus"></i>
                 </button>

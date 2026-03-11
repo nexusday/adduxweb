@@ -92,6 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
   try { initCardObserver(document); } catch (e) {}
   try { delegateAddToCart(); } catch (e) {}
   try { initMobileNav(); } catch (e) {}
+  try { initGalaxyBackground(); } catch (e) {}
 });
 
 export default { showToast, animateAddToCart, initCardObserver };
@@ -137,4 +138,86 @@ function initMobileNav() {
   });
   // close on resize > 720
   window.addEventListener('resize', () => { if (window.innerWidth > 720) close(); });
+}
+
+// Initialize a Three.js galaxy-like background (emerald particles)
+export function initGalaxyBackground() {
+  if (document.getElementById('threeGalaxyCanvas')) return;
+
+  const canvas = document.createElement('canvas');
+  canvas.id = 'threeGalaxyCanvas';
+  canvas.className = 'three-canvas';
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
+  canvas.style.display = 'block';
+  document.body.appendChild(canvas);
+  // add an ambient gradient layer above the canvas but below content
+  if (!document.querySelector('.site-ambient')) {
+    const ambient = document.createElement('div');
+    ambient.className = 'site-ambient ambient-noise';
+    document.body.appendChild(ambient);
+  }
+  // mark body so we can switch background to transparent when galaxy is active
+  document.body.classList.add('has-galaxy');
+
+  const script = document.createElement('script');
+  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+  script.async = true;
+  script.onload = () => {
+    try {
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(window.devicePixelRatio || 1);
+
+      const particlesGeometry = new THREE.BufferGeometry();
+      const particlesCount = 4000;
+      const posArray = new Float32Array(particlesCount * 3);
+      for (let i = 0; i < particlesCount * 3; i++) {
+        posArray[i] = (Math.random() - 0.5) * 15;
+      }
+      particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+      const particlesMaterial = new THREE.PointsMaterial({
+        size: 0.02,
+        color: 0x10b981,
+        transparent: true,
+        opacity: 0.75,
+        blending: THREE.AdditiveBlending
+      });
+
+      const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+      scene.add(particlesMesh);
+
+      camera.position.z = 3;
+
+      let rafId = null;
+      const animate = () => {
+        rafId = requestAnimationFrame(animate);
+        particlesMesh.rotation.y += 0.0009;
+        particlesMesh.rotation.x += 0.00035;
+        renderer.render(scene, camera);
+      };
+      animate();
+
+      const handleResize = () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      };
+      window.addEventListener('resize', handleResize);
+
+      // expose cleanup in case needed
+      canvas._threeCleanup = () => {
+        if (rafId) cancelAnimationFrame(rafId);
+        window.removeEventListener('resize', handleResize);
+        try { renderer.dispose(); } catch (e) {}
+      };
+    } catch (err) {
+      console.error('Three.js galaxy init error', err);
+    }
+  };
+  script.onerror = () => { console.warn('Failed to load Three.js'); };
+  document.head.appendChild(script);
 }

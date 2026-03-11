@@ -1,0 +1,198 @@
+/* Overhaul styles: design tokens, refined nav/hero/cards, microinteractions */
+:root{
+  /* color tokens */
+  --bg-900: #050505;
+  --bg-800: #071012;
+  --surface-100: #0f1516;
+  --surface-200: #0b1211;
+  --primary-500: #10b981;
+  --primary-600: #0ea76f;
+  --primary-glow: 0 8px 30px rgba(16,185,129,0.18);
+  --accent: #7ef3c1;
+  --muted: #98a1a3;
+  --glass: rgba(255,255,255,0.03);
+  --radius-lg: 14px;
+  --radius-md: 10px;
+  --gap: 1rem;
+  --ease: cubic-bezier(.22,1,.36,1);
+}
+
+/* Core layout tweaks */
+.has-galaxy body, body.has-galaxy { background: transparent !important; }
+body { background: linear-gradient(180deg,var(--bg-900),var(--bg-800)); color: #e9eef0; }
+.elite-nav { background: linear-gradient(180deg, rgba(4,6,7,0.6), rgba(4,6,7,0.4)); }
+
+/* Nav: compact, left-aligned items, icon emphasis */
+.navbar { border-bottom: 1px solid rgba(255,255,255,0.04); }
+.nav-container { align-items:center; display:flex; gap:var(--gap); }
+.logo { font-weight:800; color: #f7fbfb; letter-spacing:-0.6px; display:flex; align-items:center; gap:10px; }
+.logo-box{ width:48px; height:48px; border-radius:12px; overflow:hidden; display:inline-grid; place-items:center; box-shadow: var(--primary-glow); border:1px solid rgba(16,185,129,0.18); }
+.nav-links { display:flex; gap:20px; align-items:center; color:var(--muted); }
+.nav-links a{ color:var(--muted); font-weight:600; padding:6px 8px; border-radius:8px; }
+.nav-links a:hover{ color:var(--primary-500); transform:translateY(-2px); }
+
+.nav-actions { display:flex; align-items:center; gap:12px; margin-left:auto; }
+.coins-display { color:var(--accent); font-weight:800; display:flex; align-items:center; gap:8px; background: linear-gradient(180deg, rgba(16,185,129,0.06), transparent); padding:6px 10px; border-radius:999px; border:1px solid rgba(16,185,129,0.08); }
+.user-menu-btn { width:44px; height:44px; border-radius:12px; display:grid; place-items:center; background:var(--surface-100); border:1px solid rgba(255,255,255,0.04); }
+.notifications-wrapper .btn { position:relative; }
+.notifications-wrapper .badge { position:absolute; top:-6px; right:-6px; background:var(--primary-500); color:#032; padding:3px 7px; border-radius:999px; font-size:0.72rem; }
+
+/* Hero revamp */
+.hero.elite-hero{ padding:120px 0 48px; background: linear-gradient(180deg, rgba(11,17,14,0.2), transparent); border-bottom: 1px solid rgba(255,255,255,0.02); }
+.hero-title-combo{ font-size:2.6rem; font-weight:800; display:flex; align-items:center; gap:14px; }
+.hero-subtitle{ color:var(--muted); margin-top:8px; max-width:720px; }
+.hero-actions .btn{ margin-right:12px; }
+.btn-glow{ box-shadow: var(--primary-glow); }
+.btn-primary{ background: linear-gradient(90deg,var(--primary-500),var(--primary-600)); color:#031006; border:none; }
+
+/* Product cards: modern, image focus, micro interactions */
+.card{ background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02)); border-radius:var(--radius-lg); padding:12px; overflow:hidden; transition: transform 0.45s var(--ease), box-shadow 0.45s var(--ease); border:1px solid rgba(255,255,255,0.03); }
+.card:hover{ transform: translateY(-8px); box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
+.card-img{ border-radius:10px; overflow:hidden; position:relative; }
+.card-img img{ display:block; width:100%; height:170px; object-fit:cover; transition: transform 0.6s var(--ease); }
+.card:hover .card-img img{ transform: scale(1.06); }
+.price{ font-weight:800; color:var(--primary-500); }
+.stock-badge{ background: rgba(255,255,255,0.02); padding:6px 8px; border-radius:999px; color:var(--muted); font-weight:700; }
+
+/* Card footer and price layout */
+.card-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:10px; flex-wrap:wrap; }
+.price-block { display:flex; flex-direction:column; align-items:flex-start; min-width:0; }
+.price-original { font-size:0.78rem; color:var(--muted); text-decoration: line-through; font-weight:600; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.price { font-size:1.05rem; color:var(--primary-500); white-space:nowrap; }
+.add-btn { background:transparent; border:1px solid rgba(255,255,255,0.04); width:44px; height:44px; border-radius:10px; display:grid; place-items:center; }
+.add-btn i { font-size:16px; }
+
+/* subtle shimmer on images */
+.card-img::after{ content:''; position:absolute; left:-120%; top:0; width:60%; height:100%; background:linear-gradient(120deg, rgba(255,255,255,0.02), rgba(255,255,255,0.06), rgba(255,255,255,0.02)); transform: skewX(-25deg); transition: left 0.9s ease; }
+.card:hover .card-img::after{ left:120%; }
+
+/* Toasts */
+.toast{ right:22px; top:22px; padding:12px 16px; border-radius:10px; background:linear-gradient(180deg,var(--surface-100),var(--surface-200)); border:1px solid rgba(255,255,255,0.04); box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
+
+/* Small screens adjustments */
+@media (max-width:720px){
+  .hero-title-combo{ font-size:1.8rem; }
+  .nav-links{ display:none; }
+  .nav-container{ gap:0.5rem; }
+  .nav-actions{ margin-left:8px; }
+  .card-img img{ height:140px; }
+}
+
+/* Accessibility focus states */
+a:focus, button:focus{ outline: 3px solid rgba(16,185,129,0.12); outline-offset:3px; }
+
+/* Utility */
+.muted { color:var(--muted); }
+
+/* End of overhaul */
+
+/* --- Background ambient + animated gradient --- */
+.site-ambient {
+  position:fixed; inset:0; pointer-events:none; z-index:-2;
+  background: radial-gradient(600px 300px at 10% 10%, rgba(16,185,129,0.06), transparent 12%),
+              radial-gradient(500px 260px at 90% 30%, rgba(12,140,100,0.04), transparent 14%),
+              linear-gradient(180deg, rgba(2,6,6,0.6), rgba(6,10,8,0.75));
+  mix-blend-mode: normal;
+  animation: ambientShift 18s linear infinite;
+}
+
+@keyframes ambientShift {
+  0% { background-position: 0% 0%, 100% 20%, 0% 0%; }
+  50% { background-position: 10% 5%, 90% 30%, 0% 10%; }
+  100% { background-position: 0% 0%, 100% 20%, 0% 0%; }
+}
+
+/* subtle noise overlay to add texture (uses repeated linear gradients) */
+.ambient-noise::before{
+  content:''; position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:0.04;
+  background-image: linear-gradient(transparent 50%, rgba(255,255,255,0.02) 51%), linear-gradient(90deg, transparent 50%, rgba(255,255,255,0.015) 51%);
+  background-size: 6px 6px, 6px 6px;
+}
+
+/* Three.js canvas styling */
+.three-canvas, #threeGalaxyCanvas { position: fixed; inset: 0; z-index: -4; pointer-events: none; opacity: 0.7; display: block; }
+.site-ambient { z-index: -3; }
+
+/* --- Card 'green fire' border effect --- */
+.card { position:relative; overflow:visible; }
+.card::before,
+.card::after{
+  content:''; position:absolute; inset:0; border-radius:var(--radius-lg); pointer-events:none; z-index:0;
+}
+
+/* soft glow */
+.card::before{
+  box-shadow: 0 6px 30px rgba(16,185,129,0.06), inset 0 1px 0 rgba(255,255,255,0.02);
+  filter: blur(8px);
+  opacity:0.9;
+}
+
+/* animated border stroke */
+.card::after{
+  /* Flame-like animated border outside the card content (frame-only) */
+  content: '';
+  position: absolute;
+  /* place slightly outside card so it frames the edges, not overlay content */
+  inset: -8px;
+  border-radius: calc(var(--radius-lg) + 8px);
+  pointer-events: none;
+  background: linear-gradient(90deg,
+    rgba(16,185,129,0.00) 0%,
+    rgba(16,185,129,0.12) 8%,
+    rgba(126,243,193,0.20) 20%,
+    rgba(16,185,129,0.30) 36%,
+    rgba(126,243,193,0.16) 56%,
+    rgba(16,185,129,0.08) 78%,
+    rgba(16,185,129,0.00) 100%);
+  background-size: 220% 120%;
+  background-position: 0% 50%;
+  filter: blur(6px) saturate(1.1);
+  opacity: 0.95;
+  mix-blend-mode: screen;
+  transform: translateZ(0);
+  z-index: 1; /* behind .card-inner which has z-index:2 */
+  animation: flameFlow 2.6s linear infinite, flameFlicker 1.6s ease-in-out infinite;
+}
+
+@keyframes flameFlow{
+  0% { background-position: 0% 55%; }
+  50% { background-position: -60% 45%; }
+  100% { background-position: 0% 55%; }
+}
+
+@keyframes flameFlicker{
+  0% { transform: translateY(0) scaleY(1); opacity:0.95; }
+  25% { transform: translateY(-1px) scaleY(1.02); opacity:0.98; }
+  50% { transform: translateY(-2px) scaleY(1.03); opacity:0.9; }
+  75% { transform: translateY(-1px) scaleY(1.01); opacity:0.97; }
+  100% { transform: translateY(0) scaleY(1); opacity:0.95; }
+}
+
+/* Ember flicker on image */
+.card-img::after{
+  content:''; position:absolute; inset:auto 0 0 0; height:36%; background: radial-gradient(ellipse at 10% 10%, rgba(126,243,193,0.10), transparent 20%), radial-gradient(ellipse at 90% 30%, rgba(16,185,129,0.06), transparent 18%);
+  pointer-events:none; mix-blend-mode: screen; opacity:0.9; transition: opacity 0.4s ease;
+}
+.card:hover .card-img::after{ opacity:1; transform: translateY(-6px); }
+
+/* stronger highlight on hover */
+.card:hover::before{ box-shadow: 0 30px 80px rgba(16,185,129,0.08), inset 0 1px 0 rgba(255,255,255,0.03); }
+
+/* make sure inner content sits above pseudo borders */
+.card > .card-inner{ position:relative; z-index:2; background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02)); border-radius: var(--radius-lg); }
+
+/* responsive: reduce border effect to avoid overflow */
+@media (max-width:420px){
+  /* Enable a toned-down flame effect on mobile: less blur, smaller background, lower opacity */
+  .card::after{
+    display:block;
+    background-size: 160% 100%;
+    background-position: 0% 50%;
+    filter: blur(4px) saturate(1.05);
+    opacity: 0.8;
+    animation: flameFlow 2.6s linear infinite, flameFlicker 1.6s ease-in-out infinite;
+    transform: translateZ(0) scale(1.01);
+  }
+  .card::before{ filter: blur(6px); }
+}
+
