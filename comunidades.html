@@ -22,6 +22,7 @@
     <link rel="stylesheet" href="public/css/style.css">
     <link rel="stylesheet" href="public/css/comunidades.css">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 </head>
 <body>
     <div class="ambient-glow"></div>
@@ -43,11 +44,6 @@
             </div>
 
             <div class="nav-actions" id="navRight">
-                <div id="loggedOutNav" class="nav-auth" style="display: flex; gap: 0.75rem;">
-                    <a href="/login" class="btn btn-ghost btn-sm">Ingresar</a>
-                    <a href="/registrar" class="btn btn-primary btn-sm">Crear Cuenta</a>
-                </div>
-
                 <div id="loggedInNav" class="nav-auth" style="display: none; gap: 1rem; align-items: center;">
                     <div class="coins-display">
                         <i data-lucide="coins"></i>
@@ -127,6 +123,9 @@
     </section>
 
     
+    <script type="module" src="public/js/base.js"></script>
+    <script type="module" src="public/js/ui.js"></script>
+    <script type="module" src="public/js/animations.js"></script>
     <script type="module" src="public/js/comunidades.js"></script>
 </body>
 </html>

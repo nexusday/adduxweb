@@ -1,5 +1,6 @@
 ﻿
 import { database, auth } from "./base.js";
+import { initCardObserver, animateAddToCart } from './ui.js';
 import { ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 import { signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
@@ -17,6 +18,38 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeCarousel();
     setupScrollAnimations();
     setupSearch();
+    try { updateHeroActionsByAuth(); } catch(e) {}
+});
+
+// Update hero buttons and nav presence depending on auth state
+function updateHeroActionsByAuth() {
+    const heroActions = document.querySelector('.hero-actions');
+    const navLoggedOut = document.getElementById('loggedOutNav');
+    const navLoggedIn = document.getElementById('loggedInNav');
+    const isLogged = !!(window.ADDUXSHOP && window.ADDUXSHOP.currentUser);
+
+    if (!heroActions) return;
+
+    if (isLogged) {
+        heroActions.innerHTML = `
+            <a href="#productsGrid" class="btn btn-primary">Ver productos</a>
+            <button class="btn btn-ghost" onclick="openRechargeModal()">Recargar monedas</button>
+        `;
+        if (navLoggedOut) navLoggedOut.style.display = 'none';
+        if (navLoggedIn) navLoggedIn.style.display = 'flex';
+    } else {
+        heroActions.innerHTML = `
+            <a href="/login" class="btn btn-ghost">Ingresar</a>
+            <a href="/registrar" class="btn btn-primary">Registrarse</a>
+        `;
+        if (navLoggedOut) navLoggedOut.style.display = 'none';
+        if (navLoggedIn) navLoggedIn.style.display = 'none';
+    }
+}
+
+// Listen for auth state changes (emitted from base.js)
+window.addEventListener('authStateChanged', () => {
+    try { updateHeroActionsByAuth(); } catch(e) {}
 });
 
 function loadProducts() {
@@ -119,10 +152,11 @@ function renderProducts(productsToRender) {
         const stockClass = soldOut ? 'stock-badge-empty' : 'stock-badge-ok';
 
         return `
-        <div class="card visible fade-in" data-category="${product.category || 'all'}">
+        <div class="card" data-category="${product.category || 'all'}" data-product-id="${product.id}">
+          <div class="card-inner">
             <div class="card-img">
                 <div class="status-pill">${soldOut ? 'AGOTADO' : 'PREMIUM'}</div>
-                <img src="${product.image || 'https://picsum.photos/seed/' + product.id + '/400/260.jpg'}" 
+                <img loading="lazy" src="${product.image || 'https://picsum.photos/seed/' + product.id + '/400/260.jpg'}" 
                      alt="${product.title}"
                      onerror="this.src='https://picsum.photos/seed/default/400/260.jpg'">
             </div>
@@ -136,6 +170,7 @@ function renderProducts(productsToRender) {
                     <i data-lucide="plus"></i>
                 </button>
             </div>
+          </div>
         </div>
         `;
     }
@@ -164,6 +199,8 @@ function renderProducts(productsToRender) {
     } catch (err) {
         console.warn('Lucide icon init error:', err);
     }
+    // initialize card reveal observer and other UI animations after rendering
+    try { initCardObserver(document); } catch (e) { /* ignore */ }
 }
 
 function filterProducts(category) {
@@ -231,6 +268,13 @@ function addToCart(productId) {
     
     showToast(`${product.title} agregado al carrito`, 'success');
     updateCartUI();
+    // animate image flying to cart
+    try {
+        const card = document.querySelector(`.card[data-product-id="${productId}"]`);
+        const img = card ? card.querySelector('.card-img img') : null;
+        const cartBtn = document.querySelector('.user-menu-btn') || document.querySelector('#navCart') || document.querySelector('.nav-actions');
+        if (img) animateAddToCart(img, cartBtn);
+    } catch (e) { /* ignore animation errors */ }
 }
 
 function updateCartUI() {
