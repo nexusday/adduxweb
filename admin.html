@@ -275,12 +275,9 @@
                                     <select id="accountPoolSelect" class="form-input" required></select>
                                 </div>
                                 <div class="form-group">
-                                    <label for="accountEmail">Correo</label>
-                                    <input type="email" id="accountEmail" class="form-input" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="accountPassword">Contraseña</label>
-                                    <input type="text" id="accountPassword" class="form-input" required>
+                                    <label for="accountBulkInput">Cuentas (una por línea)</label>
+                                    <textarea id="accountBulkInput" class="form-input" rows="6" placeholder="Ejemplos: correo:pass | user:pass | numero:pass | id:pass | https://link.de/entrega" required></textarea>
+                                    <small>Acepta formatos: <strong>user:pass</strong>, <strong>numero:pass</strong>, <strong>id:pass</strong>, o enlaces/identificadores sin ':'; se guardan tal cual y se entregan al comprar.</small>
                                 </div>
                                 <div class="form-group">
                                     <label for="accountExpirationDays">Duración (días)</label>
@@ -593,6 +590,11 @@
                         <div class="form-group">
                             <label for="productStock">Stock</label>
                             <input type="number" id="productStock" class="form-input" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="productUnlimitedStock">Stock ilimitado</label>
+                            <input type="checkbox" id="productUnlimitedStock" class="form-input" style="width:auto;display:inline-block;margin-left:8px;">
+                            <small>Si está habilitado, el producto no disminuirá stock al comprar.</small>
                         </div>
                     </div>
                     

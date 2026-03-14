@@ -19,7 +19,7 @@
   --transition: all 0.6s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Prevent FOUC: hide loggedOutNav until JS controls visibility */
+
 #loggedOutNav {
   display: none !important;
 }
@@ -50,7 +50,7 @@ button { font-family: inherit; }
   margin: 0 auto;
 }
 
-/* Badge de stock en cards */
+
 .card-stock { margin: 6px 0 4px; }
 .stock-badge {
   display: inline-flex;
@@ -153,7 +153,7 @@ button { font-family: inherit; }
   gap: 1.25rem;
 }
 
-/* Ensure nav layout is flexible and elements can shrink on small screens */
+
 .nav-container { gap: 0.9rem; }
 .logo { flex: 0 0 auto; }
 .nav-links { flex: 1 1 auto; min-width: 0; overflow: hidden; }
@@ -289,13 +289,13 @@ button { font-family: inherit; }
 @media (max-width: 560px) {
   .navbar { padding: 0 4%; }
   .nav-links { display: none; }
-  /* When links hidden, bring action icons closer to the logo to improve mobile layout */
+  
   .nav-container { justify-content: flex-start; }
   .nav-actions { margin-left: 8px; gap: 8px; }
   .nav-actions .nav-auth { gap: 8px; }
 }
 
-/* Improved responsive navbar for small devices */
+
 @media (max-width: 720px) {
   .navbar { height: 64px; padding: 0 4%; }
   .nav-container { gap: 0.6rem; }
@@ -321,13 +321,13 @@ button { font-family: inherit; }
   .nav-actions { gap: 0.4rem; }
 }
 
-/* If space is extremely tight, force the register button to shrink and reduce gap */
+
 @media (max-width: 360px) {
   .nav-actions .btn-primary { padding-left: 0.5rem; padding-right: 0.5rem; }
   .nav-actions .btn-ghost { display: none; }
 }
 
-/* Hamburger button and mobile drawer */
+
 .hamburger-btn {
   display: none;
   width: 44px;
@@ -371,9 +371,9 @@ button { font-family: inherit; }
 }
 
 
-/* Prevent accidental horizontal scroll caused by ambient glow */
+
 @media (max-width: 480px) {
-  /* avoid pushing content outside viewport by using transform instead of negative offsets */
+  
   .ambient-glow {
     width: 70vw;
     height: 70vw;
@@ -455,7 +455,6 @@ button { font-family: inherit; }
 .modal-body { padding: 20px; max-height: 70vh; overflow-y: auto; }
 .modal-close { border: none; background: transparent; color: var(--text-main); font-size: 1.4rem; cursor: pointer; }
 
-/* Checkout modal layout */
 .checkout-summary { display: grid; gap: 10px; margin-bottom: 16px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-low); }
 .checkout-summary h4 { margin: 0; color: var(--text-main); letter-spacing: -0.01em; font-weight: 700; }
 .checkout-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: 10px; background: var(--surface-mid); border: 1px solid var(--border); color: var(--text-main); }
@@ -508,7 +507,7 @@ form { width: 100%; }
 .auth-section { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 120px 16px 60px; background: radial-gradient(circle at 20% 20%, rgba(16,185,129,0.05), transparent 26%), var(--bg); }
 .auth-container { width: min(520px, 96vw); display: flex; flex-direction: column; gap: 16px; }
 
-/* --- UI Animation Helpers (nuevo) --- */
+
 .fade-in { animation: fadeIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .slide-up { animation: slideUp 0.62s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .pulse { animation: pulse 2.8s ease-in-out infinite; }
@@ -527,26 +526,24 @@ form { width: 100%; }
   100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
 }
 
-/* Fly-to-cart animation element */
 .fly-image { position: fixed; pointer-events: none; z-index: 3000; border-radius: 10px; will-change: transform, opacity; transition: transform 0.9s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.65s ease-out; }
 
-/* Button microinteraction */
+
 .btn-glow { box-shadow: 0 8px 26px rgba(16,185,129,0.12); transition: transform 0.28s ease, box-shadow 0.28s ease; }
 .btn-glow:hover { transform: translateY(-4px); box-shadow: 0 20px 48px rgba(16,185,129,0.18); }
 
-/* Neon outline for hero/title */
+
 .neon-border { box-shadow: 0 8px 40px rgba(16,185,129,0.06), 0 0 28px rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.12); }
 
-/* Subtle shimmer for product loading */
+
 .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 100%); background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
 @keyframes shimmer { 0% { background-position: 200% 0 } 100% { background-position: -200% 0 } }
 
-/* Utility for staggered card reveal (JS añadirá delays) */
+
 .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.6s cubic-bezier(0.22,1,0.36,1), transform 0.6s cubic-bezier(0.22,1,0.36,1); }
 .reveal.visible { opacity: 1; transform: translateY(0); }
 
-/* --- Advanced visual enhancements (Top-level design) --- */
-/* Animated gradient hero background */
+
 .hero {
   position: relative;
   overflow: visible;
@@ -568,10 +565,10 @@ form { width: 100%; }
   100% { transform: translateY(0) rotate(-1deg) scale(1); opacity: 0.92 }
 }
 
-/* Neon gradient headline */
+
 .elite-hero h1 span { background: linear-gradient(90deg, #dfffee 0%, #a7ffd1 40%, #7fffb8 60%, #dfffee 100%); -webkit-background-clip: text; color: transparent; }
 
-/* Cards: 3D tilt + depth */
+
 .card { perspective: 1200px; transform-style: preserve-3d; will-change: transform; }
 .card .card-inner { transition: transform 0.28s ease, box-shadow 0.28s ease; transform-origin: center; }
 .card.tilt { box-shadow: 0 30px 80px rgba(0,0,0,0.55); }
@@ -580,20 +577,20 @@ form { width: 100%; }
   position: absolute; inset: 0; pointer-events: none; border-radius: 16px; mix-blend-mode: overlay; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06));
 }
 
-/* Hover 3D pop */
+
 .card:hover .card-inner { transform: translateZ(18px) scale(1.01); }
 
-/* Fancy product price badge */
+
 .price { background: linear-gradient(90deg, rgba(16,185,129,0.14), rgba(16,185,129,0.06)); padding: 6px 10px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; }
 
-/* Nav glass lift on scroll */
+
 .navbar.scrolled { background: linear-gradient(180deg, rgba(5,5,5,0.82), rgba(5,5,5,0.6)); transform: translateY(-2px) scale(1.003); box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
 
-/* Cursor spotlight (optional) */
+
 .cursor-spotlight { position: fixed; pointer-events: none; z-index: 4000; mix-blend-mode: screen; width: 180px; height: 180px; border-radius: 50%; background: radial-gradient(circle, rgba(16,185,129,0.12), rgba(16,185,129,0.02) 40%, transparent 60%); transform: translate(-50%, -50%); transition: opacity 0.18s ease; opacity: 0; }
 .cursor-spotlight.active { opacity: 1; }
 
-/* Fix: asegurar que los botones del hero sean visibles (debug/override) */
+
 .hero-actions { position: relative; z-index: 60; }
 .hero-actions .btn { opacity: 1 !important; visibility: visible !important; display: inline-flex !important; transform: none !important; }
 .hero-actions .btn-primary { background: var(--primary) !important; color: #000 !important; box-shadow: 0 10px 40px var(--primary-glow) !important; }

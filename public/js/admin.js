@@ -39,93 +39,6 @@ function loadAdminData() {
     loadThemeSetting();
 }
 
-function setupEventListeners() {
-
-    const productForm = document.getElementById('productForm');
-    if (productForm) productForm.addEventListener('submit', handleProductSubmit);
-
-    const categoryForm = document.getElementById('categoryForm');
-    if (categoryForm) categoryForm.addEventListener('submit', handleCategorySubmit);
-
-    const adForm = document.getElementById('adForm');
-    if (adForm) adForm.addEventListener('submit', handleAdSubmit);
-
-    const userForm = document.getElementById('userForm');
-    if (userForm) userForm.addEventListener('submit', handleUserSubmit);
-
-    const coinSettingsForm = document.getElementById('coinSettingsForm');
-    if (coinSettingsForm) coinSettingsForm.addEventListener('submit', handleCoinSettings);
-    
-    const generalSettingsForm = document.getElementById('generalSettingsForm');
-    if (generalSettingsForm) generalSettingsForm.addEventListener('submit', handleGeneralSettings);
-
-    const promoForm = document.getElementById('promoForm');
-    if (promoForm) promoForm.addEventListener('submit', handlePromoSubmit);
-    const promoCancelBtn = document.getElementById('promoCancelEditBtn');
-    if (promoCancelBtn) promoCancelBtn.addEventListener('click', cancelPromoEdit);
-
-    const communityForm = document.getElementById('communityForm');
-    if (communityForm) communityForm.addEventListener('submit', handleCommunitySubmit);
-
-    const accountPoolForm = document.getElementById('accountPoolForm');
-    if (accountPoolForm) accountPoolForm.addEventListener('submit', handleAccountPoolSubmit);
-
-    const accountAddForm = document.getElementById('accountAddForm');
-    if (accountAddForm) accountAddForm.addEventListener('submit', handleAccountAddSubmit);
-
-    const accountEditForm = document.getElementById('accountEditForm');
-    if (accountEditForm) accountEditForm.addEventListener('submit', handleAccountEditSubmit);
-    const adminNotifForm = document.getElementById('adminNotificationForm');
-    if (adminNotifForm) adminNotifForm.addEventListener('submit', handleAdminNotificationSubmit);
-}
-
-async function handleAdminNotificationSubmit(e) {
-    e.preventDefault();
-    const userSelect = document.getElementById('notifUserSelect');
-    const title = document.getElementById('notifTitle')?.value?.trim();
-    const body = document.getElementById('notifBody')?.value?.trim();
-    if (!title || !body) return showToast('Completa título y descripción', 'error');
-    showLoader();
-    try {
-        if (!userSelect || !userSelect.value) {
-            // broadcast to all users: write a single broadcast entry
-            const broadcastsRef = ref(database, 'broadcasts');
-            await push(broadcastsRef, { title, body, createdAt: new Date().toISOString() });
-            // determine user count for feedback
-            try {
-                const usersRef = ref(database, 'users');
-                const snapshot = await get(usersRef);
-                const count = snapshot.exists() ? Object.keys(snapshot.val() || {}).length : 0;
-                showToast(`Notificación enviada a ${count} usuarios`, 'success');
-            } catch(e) { showToast('Notificación enviada', 'success'); }
-        } else {
-            const uid = userSelect.value;
-            await push(ref(database, `notifications/${uid}`), { title, body, createdAt: new Date().toISOString(), read:false });
-            showToast('Notificación enviada al usuario', 'success');
-        }
-        
-        const form = document.getElementById('adminNotificationForm'); if (form) form.reset();
-    } catch (err) {
-        console.error('Error sending admin notification:', err);
-        showToast('Error al enviar notificación', 'error');
-    } finally { hideLoader(); }
-}
-
-function loadCategories() {
-    console.log('Loading categories from Firebase...');
-    const categoriesRef = ref(database, 'categories');
-    onValue(categoriesRef, (snapshot) => {
-        categories = [];
-        if (snapshot.exists()) {
-            snapshot.forEach(child => {
-                categories.push({ id: child.key, ...child.val() });
-            });
-        }
-        updateCategoriesList();
-        populateCategorySelect();
-    }, (err) => console.error('Error loading categories:', err));
-}
-
 function updateCategoriesList() {
     const el = document.getElementById('categoriesList');
     if (!el) return;
@@ -160,6 +73,21 @@ function populateCategorySelect() {
         opt.dataset.slug = c.slug || '';
         select.appendChild(opt);
     });
+}
+
+function loadCategories() {
+    console.log('Loading categories from Firebase...');
+    const categoriesRef = ref(database, 'categories');
+    onValue(categoriesRef, (snapshot) => {
+        categories = [];
+        if (snapshot.exists()) {
+            snapshot.forEach(child => {
+                categories.push({ id: child.key, ...child.val() });
+            });
+        }
+        updateCategoriesList();
+        populateCategorySelect();
+    }, (err) => console.error('Error loading categories:', err));
 }
 
 async function handleCategorySubmit(e) {
@@ -291,6 +219,7 @@ async function handlePromoSubmit(e) {
             showToast('Código promocional creado', 'success');
         }
         resetPromoForm();
+        // table will update via realtime listener
     } catch (err) {
         console.error('Error saving promo code:', err);
         showToast('Error al guardar código', 'error');
@@ -299,77 +228,11 @@ async function handlePromoSubmit(e) {
     }
 }
 
-function startPromoEdit(promoId) {
-    const promo = promoCodes.find(p => p.id === promoId);
-    if (!promo) return;
-    currentEditingPromoId = promoId;
-    const codeInput = document.getElementById('promoCodeInput');
-    const discountInput = document.getElementById('promoDiscountInput');
-    if (codeInput) codeInput.value = promo.code || '';
-    if (discountInput) discountInput.value = promo.discount || 0;
-    setPromoFormMode('edit');
-    const form = document.getElementById('promoForm');
-    if (form) form.scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
-function cancelPromoEdit() {
-    resetPromoForm();
-}
-
-async function deletePromo(id) {
-    if (!confirm('Eliminar este código promocional?')) return;
-    showLoader();
-    try {
-        await remove(ref(database, `promoCodes/${id}`));
-        showToast('Código eliminado', 'success');
-    } catch (err) {
-        console.error('Error deleting promo:', err);
-        showToast('Error al eliminar código', 'error');
-    } finally {
-        hideLoader();
-    }
-}
-
-window.showPromoForm = function() {
-    const el = document.getElementById('promos-section');
-    if (el) el.scrollIntoView({ behavior: 'smooth' });
-};
-window.startPromoEditWrapper = function(id) { startPromoEdit(id); };
-window.deletePromoWrapper = function(id) { deletePromo(id); };
-
-async function handleCommunitySubmit(e) {
-    e.preventDefault();
-    const nameInput = document.getElementById('communityName');
-    const typeSelect = document.getElementById('communityType');
-    const linkInput = document.getElementById('communityLink');
-    if (!nameInput || !typeSelect || !linkInput) return;
-
-    const name = nameInput.value.trim();
-    const type = typeSelect.value;
-    const link = linkInput.value.trim();
-    if (!name || !type || !link) return showToast('Completa todos los campos', 'error');
-
-    showLoader();
-    try {
-        await push(ref(database, 'communities'), {
-            name,
-            type,
-            link,
-            createdAt: new Date().toISOString()
-        });
-        showToast('Comunidad guardada', 'success');
-        e.target.reset();
-    } catch (err) {
-        console.error('Error saving community:', err);
-        showToast('Error al guardar la comunidad', 'error');
-    } finally {
-        hideLoader();
-    }
-}
-
+// Load communities listener
 function loadCommunities() {
-    const commRef = ref(database, 'communities');
-    onValue(commRef, (snapshot) => {
+    console.log('Loading communities from Firebase...');
+    const communitiesRef = ref(database, 'communities');
+    onValue(communitiesRef, (snapshot) => {
         communities = [];
         if (snapshot.exists()) {
             snapshot.forEach(child => {
@@ -659,45 +522,78 @@ async function handleAccountAddSubmit(e) {
     e.preventDefault();
 
     const poolSelect = document.getElementById('accountPoolSelect');
-    const emailInput = document.getElementById('accountEmail');
-    const passInput = document.getElementById('accountPassword');
+    const bulkInput = document.getElementById('accountBulkInput');
     const expirationInput = document.getElementById('accountExpirationDays');
     const maxProfilesInput = document.getElementById('accountMaxProfiles');
 
-    if (!poolSelect || !emailInput || !passInput || !maxProfilesInput || !expirationInput) return;
+    if (!poolSelect || !bulkInput || !maxProfilesInput || !expirationInput) return;
 
     const poolId = poolSelect.value;
-    const email = emailInput.value.trim();
-    const password = passInput.value.trim();
+    const bulkValue = bulkInput.value.trim();
     const expirationDays = parseInt(expirationInput.value, 10) || 30;
     const maxProfiles = parseInt(maxProfilesInput.value, 10) || 4;
 
     if (!poolId) return showToast('Selecciona una base', 'error');
-    if (!email || !password) return showToast('Completa correo y contraseña', 'error');
+    if (!bulkValue) return showToast('Ingresa al menos una cuenta en formato correo:contraseña', 'error');
     if (expirationDays <= 0) return showToast('Duración inválida', 'error');
     if (maxProfiles <= 0) return showToast('Perfiles máximos inválido', 'error');
 
-    const accountData = {
-        email,
-        password,
-        expirationDays,
-        maxProfiles,
-        assignedCount: 0,
-        status: 'available',
-        createdAt: new Date().toISOString()
-    };
+    const lines = bulkValue.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    const toAdd = [];
+    const invalid = [];
+
+    for (const line of lines) {
+        // Accept flexible formats: 'id:pass', 'user:pass', 'number:pass', 'email:pass', or single tokens (links/ids)
+        const idx = line.indexOf(':');
+        if (idx === -1) {
+            // single token (link or id). store in email field for backward compatibility, empty password
+            const identifier = line;
+            if (!identifier) { invalid.push(line); continue; }
+            toAdd.push({
+                email: identifier,
+                password: '',
+                raw: line,
+                kind: 'single',
+                expirationDays,
+                maxProfiles,
+                assignedCount: 0,
+                status: 'available',
+                createdAt: new Date().toISOString()
+            });
+            continue;
+        }
+
+        const identifier = line.slice(0, idx).trim();
+        const password = line.slice(idx + 1).trim();
+        if (!identifier) { invalid.push(line); continue; }
+
+        toAdd.push({
+            email: identifier,
+            password: password || '',
+            raw: line,
+            kind: 'credential',
+            expirationDays,
+            maxProfiles,
+            assignedCount: 0,
+            status: 'available',
+            createdAt: new Date().toISOString()
+        });
+    }
+
+    if (toAdd.length === 0) return showToast('No se encontraron líneas válidas. Revisa el contenido.', 'error');
 
     showLoader();
     try {
-        await push(ref(database, `accounts/${poolId}/entries`), accountData);
-        showToast('Cuenta guardada en la base', 'success');
-        emailInput.value = '';
-        passInput.value = '';
+        const pushes = toAdd.map(a => push(ref(database, `accounts/${poolId}/entries`), a));
+        await Promise.all(pushes);
+        const msg = `${toAdd.length} cuenta(s) guardada(s)` + (invalid.length ? ` — ${invalid.length} línea(s) inválidas` : '');
+        showToast(msg, 'success');
+        bulkInput.value = '';
         expirationInput.value = '30';
         maxProfilesInput.value = '4';
     } catch (err) {
-        console.error('Error adding account:', err);
-        showToast('Error al guardar cuenta', 'error');
+        console.error('Error adding accounts bulk:', err);
+        showToast('Error al guardar cuentas', 'error');
     } finally {
         hideLoader();
     }
@@ -723,20 +619,45 @@ function renderAccountEntriesList() {
         const max = entry.maxProfiles || 4;
         const statusLabel = used >= max ? 'Lleno' : 'Disponible';
         const durationLabel = entry.expirationDays ? `${entry.expirationDays} días` : 'Sin duración';
+        const primary = entry.email || entry.raw || '';
+        const secondary = entry.password ? `Pass: ${entry.password}` : (entry.kind === 'single' ? 'Token/Link' : '');
         return `
         <div class="account-entry-row">
             <div>
-                <strong>${escapeHtml(entry.email || '')}</strong><br>
-                <small>${escapeHtml(entry.password || '')}</small><br>
+                <strong>${escapeHtml(primary)}</strong><br>
+                <small>${escapeHtml(secondary)}</small><br>
                 <small>${used}/${max} perfiles - ${statusLabel} - ${durationLabel}</small>
             </div>
             <div class="entry-actions">
                 <button class="btn btn-sm btn-outline" onclick="selectAccountForEditWrapper('${entry.id}')"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-sm ${entry.active === false ? 'btn-warning' : 'btn-outline'}" onclick="toggleAccountActiveWrapper('${entry.id}')">${entry.active === false ? 'Activar' : 'Desactivar'}</button>
             </div>
         </div>
     `;
     }).join('');
 }
+
+async function toggleAccountActive(poolId, entryId, desired) {
+    if (!poolId || !entryId) return;
+    try {
+        await update(ref(database, `accounts/${poolId}/entries/${entryId}`), { active: desired, updatedAt: new Date().toISOString() });
+        showToast(desired ? 'Cuenta activada' : 'Cuenta desactivada', 'success');
+        renderAccountEntriesList();
+    } catch (err) {
+        console.error('Error toggling account active:', err);
+        showToast('Error al actualizar estado', 'error');
+    }
+}
+
+window.toggleAccountActiveWrapper = function(entryId) {
+    if (!currentAccountPoolId) return showToast('Selecciona una base primero', 'error');
+    const pool = accountPools.find(p => p.id === currentAccountPoolId);
+    if (!pool) return;
+    const entry = (pool.entries || []).find(e => e.id === entryId);
+    const desired = entry ? !(entry.active === false) : false;
+    toggleAccountActive(currentAccountPoolId, entryId, desired);
+};
+window.selectAccountForEditWrapper = function(id) { selectAccountForEdit(id); };
 
 function showAccountModal(poolId) {
     currentAccountPoolId = poolId;
@@ -1169,6 +1090,7 @@ async function handleProductSubmit(event) {
         price: parseInt(document.getElementById('productPrice').value),
         discount: parseInt(document.getElementById('productDiscount').value) || 0,
         stock: parseInt(document.getElementById('productStock').value),
+        unlimited: document.getElementById('productUnlimitedStock') ? !!document.getElementById('productUnlimitedStock').checked : false,
         image: document.getElementById('productImage').value || '',
         accountPool: document.getElementById('productAccountPool') ? document.getElementById('productAccountPool').value : '',
         updatedAt: new Date().toISOString()
@@ -1543,6 +1465,41 @@ function formatDate(timestamp) {
     if (!timestamp) return 'N/A';
     const date = new Date(timestamp);
     return date.toLocaleDateString('es-ES');
+}
+
+function setupEventListeners() {
+    const categoryForm = document.getElementById('categoryForm');
+    if (categoryForm) categoryForm.addEventListener('submit', handleCategorySubmit);
+
+    const promoForm = document.getElementById('promoForm');
+    if (promoForm) promoForm.addEventListener('submit', handlePromoSubmit);
+
+    const accountPoolForm = document.getElementById('accountPoolForm');
+    if (accountPoolForm) accountPoolForm.addEventListener('submit', handleAccountPoolSubmit);
+
+    const accountAddForm = document.getElementById('accountAddForm');
+    if (accountAddForm) accountAddForm.addEventListener('submit', handleAccountAddSubmit);
+
+    const accountEditForm = document.getElementById('accountEditForm');
+    if (accountEditForm) accountEditForm.addEventListener('submit', handleAccountEditSubmit);
+
+    const productForm = document.getElementById('productForm');
+    if (productForm) productForm.addEventListener('submit', handleProductSubmit);
+
+    const userForm = document.getElementById('userForm');
+    if (userForm) userForm.addEventListener('submit', handleUserSubmit);
+
+    const adForm = document.getElementById('adForm');
+    if (adForm) adForm.addEventListener('submit', handleAdSubmit);
+
+    const coinForm = document.getElementById('coinSettingsForm');
+    if (coinForm) coinForm.addEventListener('submit', handleCoinSettings);
+
+    const generalForm = document.getElementById('generalSettingsForm');
+    if (generalForm) generalForm.addEventListener('submit', handleGeneralSettings);
+
+    const searchInput = document.getElementById('userSearch');
+    if (searchInput) searchInput.addEventListener('input', searchUsers);
 }
 
 window.showAdminSection = showAdminSection;

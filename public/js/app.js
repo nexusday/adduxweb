@@ -145,10 +145,10 @@ function renderProducts(productsToRender) {
         const cat = categories.find(c => c.id === product.category || c.slug === product.category || (c.name && c.name.toLowerCase() === (product.category || '').toLowerCase()));
         const catLabel = (cat && (cat.name || cat.id)) || product.category || 'General';
         const numericStock = typeof product.stock === 'number' ? product.stock : null;
-        const soldOut = numericStock !== null ? numericStock <= 0 : false;
+        const soldOut = product.unlimited ? false : (numericStock !== null ? numericStock <= 0 : false);
         const finalPrice = product.discount || product.price;
         const original = product.discount ? formatCurrency(product.price) : '';
-        const stockLabel = soldOut ? 'Sin stock' : (numericStock !== null ? `${numericStock} en stock` : 'Stock no disponible');
+        const stockLabel = product.unlimited ? 'Ilimitado' : (soldOut ? 'Sin stock' : (numericStock !== null ? `${numericStock} en stock` : 'Stock no disponible'));
         const stockClass = soldOut ? 'stock-badge-empty' : 'stock-badge-ok';
 
         return `
@@ -248,7 +248,7 @@ function addToCart(productId) {
     const product = products.find(p => p.id === productId);
     if (!product) return;
     
-    if (product.stock <= 0) {
+    if (!product.unlimited && (typeof product.stock === 'number' && product.stock <= 0)) {
         showToast('Producto agotado', 'error');
         return;
     }

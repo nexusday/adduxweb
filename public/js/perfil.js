@@ -239,21 +239,34 @@ function renderAccounts(assignments) {
         return;
     }
 
-    container.innerHTML = assignments.map(acc => `
+    container.innerHTML = assignments.map(acc => {
+        const title = `<h4>${escapeHtml(acc.productTitle || 'Producto')}</h4>`;
+        const datePool = `<p class="purchase-date">${new Date(acc.fecha).toLocaleDateString()} - ${escapeHtml(acc.poolName || acc.poolId || 'Pool')}</p>`;
+        let credHtml = '';
+        if (acc.url) {
+            const href = acc.url.startsWith('http') ? acc.url : (acc.url.startsWith('www.') ? 'https://' + acc.url : acc.url);
+            credHtml += `<p class="account-cred"><strong>Enlace:</strong> <a href="${escapeHtml(href)}" target="_blank" rel="noopener">${escapeHtml(acc.url)}</a></p>`;
+            if (acc.password) credHtml += `<p class="account-cred"><strong>Nota:</strong> ${escapeHtml(acc.password)}</p>`;
+        } else {
+            credHtml += `<p class="account-cred"><strong>Identificador:</strong> ${escapeHtml(acc.email || acc.raw || '')}</p>`;
+            if (acc.password) credHtml += `<p class="account-cred"><strong>Contraseña:</strong> ${escapeHtml(acc.password)}</p>`;
+        }
+        credHtml += `<p class="account-cred"><small>Perfil ${acc.used || 0}/${acc.maxProfiles || 4}</small></p>`;
+        credHtml += `<p class="account-cred"><small>Vence: ${formatExpiration(acc.expirationDate)}</small></p>`;
+        const statusHtml = `<span class="status-badge ${acc.status === 'Completado' ? 'active' : 'pending'}">${acc.status || 'Completado'}</span>`;
+        return `
         <div class="purchase-item">
             <div class="purchase-info">
-                <h4>${escapeHtml(acc.productTitle || 'Producto')}</h4>
-                <p class="purchase-date">${new Date(acc.fecha).toLocaleDateString()} - ${escapeHtml(acc.poolName || acc.poolId || 'Pool')}</p>
-                <p class="account-cred"><strong>Correo:</strong> ${escapeHtml(acc.email || '')}</p>
-                <p class="account-cred"><strong>Contraseña:</strong> ${escapeHtml(acc.password || '')}</p>
-                <p class="account-cred"><small>Perfil ${acc.used || 0}/${acc.maxProfiles || 4}</small></p>
-                <p class="account-cred"><small>Vence: ${formatExpiration(acc.expirationDate)}</small></p>
+                ${title}
+                ${datePool}
+                ${credHtml}
             </div>
             <div class="purchase-amount">
-                <span class="status-badge ${acc.status === 'Completado' ? 'active' : 'pending'}">${acc.status || 'Completado'}</span>
+                ${statusHtml}
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 function escapeHtml(str) {

@@ -210,7 +210,7 @@ function allocateAccountsForCart() {
         for (let i = 0; i < item.quantity; i++) {
 
             pool.entries.sort((a, b) => (a.assignedCount || 0) - (b.assignedCount || 0));
-            const candidate = pool.entries.find(e => (e.maxProfiles || 4) - (e.assignedCount || 0) > 0);
+            const candidate = pool.entries.find(e => (e.active === undefined || e.active === true) && ((e.maxProfiles || 4) - (e.assignedCount || 0) > 0));
             if (!candidate) {
                 throw new Error(`No hay cuentas disponibles en ${pool.name || poolId}`);
             }
@@ -588,10 +588,12 @@ async function confirmPurchase() {
         for (const item of cart) {
             const product = products.find(p => p.id === item.id);
             if (product) {
-                const productRef = ref(database, `products/${item.id}`);
-                await update(productRef, {
-                    stock: product.stock - item.quantity
-                });
+                if (!product.unlimited) {
+                    const productRef = ref(database, `products/${item.id}`);
+                    await update(productRef, {
+                        stock: (typeof product.stock === 'number' ? product.stock : 0) - item.quantity
+                    });
+                }
             }
         }
 
