@@ -384,8 +384,7 @@ button { font-family: inherit; }
 }
 
 .card {
-  background: var(--surface-low);
-  border: 1px solid var(--border);
+  background: var(--surface-mid);
   border-radius: 16px;
   padding: 12px;
   transition: var(--transition);
@@ -395,16 +394,18 @@ button { font-family: inherit; }
   flex-direction: column;
   opacity: 0;
   transform: translateY(18px);
-  box-shadow: 0 0 0 rgba(0,0,0,0);
+  /* gradient frame using border-image for a subtle marco */
+  border: 1px solid transparent;
+  border-image: linear-gradient(90deg, rgba(16,185,129,0.22), rgba(16,185,129,0.06)) 1;
+  z-index: 0;
 }
 
 .card.visible { opacity: 1; transform: translateY(0); }
 
 .card:hover {
   background: var(--surface-mid);
-  border-color: rgba(16, 185, 129, 0.35);
   transform: translateY(-8px);
-  box-shadow: 0 18px 36px rgba(0,0,0,0.5);
+  box-shadow: 0 18px 36px rgba(0,0,0,0.5), 0 6px 20px rgba(16,185,129,0.04);
 }
 
 .card-img { width: 100%; aspect-ratio: 16 / 10; border-radius: 10px; overflow: hidden; margin-bottom: 14px; position: relative; background: var(--surface-high); }
@@ -420,11 +421,43 @@ button { font-family: inherit; }
   font-size: 0.95rem;
   line-height: 1.55;
   margin-bottom: 12px;
-  min-height: 2.8em;
+  /* clamp to 3 lines and keep uniform card height. Allow room for the "Ver más" link. */
+  display: -webkit-box;
+  line-clamp: 3;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  max-height: 6.2em;
+  min-height: 6.2em;
   font-family: 'Inter', 'Outfit', system-ui, sans-serif;
   letter-spacing: 0.01em;
   white-space: pre-line;
+  overflow: hidden;
 }
+
+.desc-more { color: var(--primary); font-weight: 800; margin-left: 6px; }
+.desc-more:hover { text-decoration: underline; }
+
+.card-desc .desc-more { display: inline-block; position: relative; z-index: 2; }
+
+.card .desc-more { display: inline-block; margin-top: 6px; font-size: 0.95rem; color: var(--primary); font-weight: 800; }
+.card .desc-more:hover { text-decoration: underline; }
+
+.desc-block { position: relative; }
+.desc-block .card-desc { padding-bottom: 1.4rem; }
+.desc-block .desc-more {
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  background: var(--surface-mid);
+  border: 1px solid var(--border);
+  color: var(--primary);
+  padding: 6px 10px;
+  border-radius: 10px;
+  z-index: 5;
+  font-weight: 800;
+  text-decoration: none;
+}
+.desc-block .desc-more:hover { background: rgba(16,185,129,0.04); }
 
 .card-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--border); margin-top: auto; }
 .price { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.05rem; color: var(--text-main); }
@@ -566,7 +599,7 @@ form { width: 100%; }
 }
 
 
-.elite-hero h1 span { background: linear-gradient(90deg, #dfffee 0%, #a7ffd1 40%, #7fffb8 60%, #dfffee 100%); -webkit-background-clip: text; color: transparent; }
+.elite-hero h1 span { background: linear-gradient(90deg, #dfffee 0%, #a7ffd1 40%, #7fffb8 60%, #dfffee 100%); background-clip: text; -webkit-background-clip: text; color: transparent; }
 
 
 .card { perspective: 1200px; transform-style: preserve-3d; will-change: transform; }

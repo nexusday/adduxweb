@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try { updateHeroActionsByAuth(); } catch(e) {}
 });
 
-// Update hero buttons and nav presence depending on auth state
+
 function updateHeroActionsByAuth() {
     const heroActions = document.querySelector('.hero-actions');
     const navLoggedOut = document.getElementById('loggedOutNav');
@@ -130,7 +130,7 @@ function renderProducts(productsToRender) {
 
             const found = categories.find(c => c.id === raw || (c.slug && c.slug === raw) || (c.name && c.name.toLowerCase() === String(raw).toLowerCase()));
             if (found) resolvedKey = found.id;
-            else resolvedKey = String(raw).toLowerCase(); // normalize raw string to lowercase
+            else resolvedKey = String(raw).toLowerCase(); 
         }
         if (!groups[resolvedKey]) groups[resolvedKey] = [];
         groups[resolvedKey].push(p);
@@ -162,7 +162,7 @@ function renderProducts(productsToRender) {
             </div>
             <div class="card-cat">${catLabel}</div>
             <h3 class="card-title">${product.title}</h3>
-            <p class="card-desc">${(product.description || '').substring(0, 110) || 'Sin descripción disponible.'}</p>
+            ${renderCardDescBlock(product)}
             <div class="card-stock"><span class="stock-badge ${stockClass}"><i class="fas fa-box"></i> ${stockLabel}</span></div>
             <div class="card-footer">
                 <div class="price-block">
@@ -195,6 +195,11 @@ function renderProducts(productsToRender) {
         `;
     }).join('');
 
+    
+    try {
+        attachCardClickHandlers();
+    } catch (e) { /* ignore */ }
+
     try {
         if (window.lucide && typeof window.lucide.createIcons === 'function') {
             window.lucide.createIcons();
@@ -202,8 +207,98 @@ function renderProducts(productsToRender) {
     } catch (err) {
         console.warn('Lucide icon init error:', err);
     }
-    // initialize card reveal observer and other UI animations after rendering
+    
     try { initCardObserver(document); } catch (e) { /* ignore */ }
+    
+    try { attachCardClickHandlers(); } catch (e) { /* ignore */ }
+}
+
+function attachCardClickHandlers() {
+    document.querySelectorAll('.card').forEach(card => {
+        
+        card.removeEventListener('click', card._detailClickHandler);
+        const handler = (ev) => {
+            
+            if (ev.target.closest('.add-btn') || ev.target.closest('button')) return;
+            const id = card.dataset.productId;
+            if (!id) return;
+            const product = products.find(p => p.id === id);
+            if (!product) return;
+            ensureDescriptionModal();
+            openDescriptionModal(product.title || 'Descripción', product.description || 'Sin descripción disponible.');
+        };
+        card._detailClickHandler = handler;
+        card.addEventListener('click', handler);
+    });
+}
+
+function renderCardDescription(product) {
+    const full = (product.description || '').trim();
+    if (!full) return 'Sin descripción disponible.';
+    const limit = 200;
+    const text = full.length <= limit ? full : (full.slice(0, limit) + '...');
+    return escapeHtml(text);
+}
+
+function renderCardDescBlock(product) {
+    const descHtml = renderCardDescription(product);
+    return `
+        <div class="desc-block">
+            <p class="card-desc">${descHtml}</p>
+        </div>
+    `;
+}
+
+function handleDescMoreClick(e) {
+    e.preventDefault();
+    const id = e.currentTarget.dataset.productId;
+    if (!id) return;
+    const product = products.find(p => p.id === id);
+    if (!product) return;
+    ensureDescriptionModal();
+    openDescriptionModal(product.title || 'Descripción', product.description || 'Sin descripción disponible.');
+}
+
+function ensureDescriptionModal() {
+    if (document.getElementById('descriptionModal')) return;
+    const modal = document.createElement('div');
+    modal.id = 'descriptionModal';
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="descriptionModalTitle">Descripción</h3>
+                <button class="modal-close" id="descriptionModalClose">×</button>
+            </div>
+            <div class="modal-body" id="descriptionModalBody"></div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    document.getElementById('descriptionModalClose').addEventListener('click', () => closeDescriptionModal());
+    modal.addEventListener('click', (ev) => { if (ev.target === modal) closeDescriptionModal(); });
+}
+
+function openDescriptionModal(title, bodyHtml) {
+    const modal = document.getElementById('descriptionModal');
+    if (!modal) return;
+    const titleEl = document.getElementById('descriptionModalTitle');
+    const bodyEl = document.getElementById('descriptionModalBody');
+    if (titleEl) titleEl.textContent = title;
+    if (bodyEl) {
+        // preserve line breaks
+        bodyEl.innerHTML = escapeHtml(bodyHtml).replace(/\n/g, '<br>');
+    }
+    modal.classList.add('show');
+}
+
+function closeDescriptionModal() {
+    const modal = document.getElementById('descriptionModal');
+    if (!modal) return;
+    modal.classList.remove('show');
+}
+
+function escapeHtml(str) {
+    return String(str).replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[s]);
 }
 
 function filterProducts(category) {

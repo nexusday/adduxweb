@@ -26,6 +26,26 @@ async function initializeAdminPanel() {
     setupEventListeners();
 }
 
+document.addEventListener('change', (ev) => {
+    if (ev.target && ev.target.id === 'productImageFile') {
+        const fileInput = ev.target;
+        const preview = document.getElementById('productImagePreview');
+        if (!preview) return;
+        if (fileInput.files && fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            reader.onload = () => {
+                preview.src = reader.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            preview.src = '';
+            preview.style.display = 'none';
+        }
+    }
+});
+
 function loadAdminData() {
     loadProducts();
     loadCategories();
@@ -219,7 +239,7 @@ async function handlePromoSubmit(e) {
             showToast('Código promocional creado', 'success');
         }
         resetPromoForm();
-        // table will update via realtime listener
+        
     } catch (err) {
         console.error('Error saving promo code:', err);
         showToast('Error al guardar código', 'error');
@@ -228,7 +248,7 @@ async function handlePromoSubmit(e) {
     }
 }
 
-// Load communities listener
+
 function loadCommunities() {
     console.log('Loading communities from Firebase...');
     const communitiesRef = ref(database, 'communities');
@@ -286,7 +306,7 @@ async function deleteCommunity(id) {
     }
 }
 
-// Pending recharges
+
 let pendingRecharges = [];
 
 function loadPendingRecharges() {
@@ -338,9 +358,9 @@ async function acceptPending(id) {
     try {
         const userId = p.userId;
         const amount = Number(p.amount) || 0;
-        // update user coins
+        
         const userRef = ref(database, `users/${userId}`);
-        // read current coins once
+        
         let currentCoins = 0;
         try {
             const userSnap = await get(userRef);
@@ -352,12 +372,12 @@ async function acceptPending(id) {
         const newCoins = currentCoins + amount;
         await update(userRef, { coins: newCoins, lastRecharge: new Date().toISOString() });
 
-        // push to recharges log
+        
         await push(ref(database, `recharges/${userId}`), { amount, method: 'Manual', status: 'Completado', fecha: new Date().toISOString(), adminReviewed: true });
 
-        // remove pending
+    
         await remove(ref(database, `pendingRecharges/${id}`));
-        // send notification to user
+        
         try {
             const notif = {
                 title: 'Recarga aceptada',
@@ -407,7 +427,7 @@ window.openImageModalById = function(id) {
         return;
     }
     img.src = p.imageBase64;
-    // ensure modal is visible
+    
     modal.classList.add('show');
 };
 window.closeImagePreviewModal = function() {
@@ -416,7 +436,7 @@ window.closeImagePreviewModal = function() {
     if (img) img.src = '';
     if (modal) modal.classList.remove('show');
 };
-// backward compatibility
+
 window.openImagePreview = window.openImageModalById;
 
 function loadProducts() {
@@ -543,10 +563,10 @@ async function handleAccountAddSubmit(e) {
     const invalid = [];
 
     for (const line of lines) {
-        // Accept flexible formats: 'id:pass', 'user:pass', 'number:pass', 'email:pass', or single tokens (links/ids)
+        //'id:pass', 'user:pass', 'number:pass', 'email:pass', o(links/ids)
         const idx = line.indexOf(':');
         if (idx === -1) {
-            // single token (link or id). store in email field for backward compatibility, empty password
+            
             const identifier = line;
             if (!identifier) { invalid.push(line); continue; }
             toAdd.push({
@@ -1058,7 +1078,19 @@ function showProductModal(productId = null) {
             document.getElementById('productPrice').value = product.price || 0;
             document.getElementById('productDiscount').value = product.discount || '';
             document.getElementById('productStock').value = product.stock || 0;
-            document.getElementById('productImage').value = product.image || '';
+                    
+                    const imgFileInput = document.getElementById('productImageFile');
+                    const preview = document.getElementById('productImagePreview');
+                    if (imgFileInput) imgFileInput.value = '';
+                    if (preview) {
+                        if (product.image) {
+                            preview.src = product.image;
+                            preview.style.display = 'block';
+                        } else {
+                            preview.src = '';
+                            preview.style.display = 'none';
+                        }
+                    }
             const poolSelect = document.getElementById('productAccountPool');
             if (poolSelect) poolSelect.value = product.accountPool || '';
         }
@@ -1091,7 +1123,8 @@ async function handleProductSubmit(event) {
         discount: parseInt(document.getElementById('productDiscount').value) || 0,
         stock: parseInt(document.getElementById('productStock').value),
         unlimited: document.getElementById('productUnlimitedStock') ? !!document.getElementById('productUnlimitedStock').checked : false,
-        image: document.getElementById('productImage').value || '',
+        
+        image: '',
         accountPool: document.getElementById('productAccountPool') ? document.getElementById('productAccountPool').value : '',
         updatedAt: new Date().toISOString()
     };
@@ -1099,6 +1132,22 @@ async function handleProductSubmit(event) {
     showLoader();
     
     try {
+        
+        if (currentEditingProduct) {
+            const orig = products.find(p => p.id === currentEditingProduct);
+            if (orig && orig.image) productData.image = orig.image;
+        }
+        
+        const imgFileInput = document.getElementById('productImageFile');
+        if (imgFileInput && imgFileInput.files && imgFileInput.files.length > 0) {
+            try {
+                const file = imgFileInput.files[0];
+                productData.image = await readFileAsDataURL(file);
+            } catch (e) {
+                console.warn('Error reading image file:', e);
+            }
+        }
+
         if (currentEditingProduct) {
 
             await update(ref(database, `products/${currentEditingProduct}`), productData);
@@ -1117,6 +1166,15 @@ async function handleProductSubmit(event) {
     } finally {
         hideLoader();
     }
+}
+
+function readFileAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
 }
 
 function editProduct(productId) {

@@ -599,8 +599,12 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="productImage">URL de Imagen</label>
-                        <input type="url" id="productImage" class="form-input" placeholder="https://...">
+                        <label for="productImageFile">Imagen</label>
+                        <input type="file" id="productImageFile" class="form-input" accept="image/*" required>
+                        <small>Sube una imagen</small>
+                        <div style="margin-top:8px;">
+                            <img id="productImagePreview" src="" alt="Preview" style="max-width:160px;border-radius:8px;display:none;border:1px solid rgba(255,255,255,0.04);">
+                        </div>
                     </div>
 
                     <div class="form-group">
